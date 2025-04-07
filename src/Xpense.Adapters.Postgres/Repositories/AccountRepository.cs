@@ -1,0 +1,65 @@
+﻿using Microsoft.EntityFrameworkCore;
+using Xpense.Core.Abstract.Persistence;
+using Xpense.Core.Entities;
+using Xpense.Core.Exceptions;
+
+namespace Xpense.Persistence.Repositories;
+
+public class AccountRepository(XpenseDbContext context) : Repository<Account>(context), IAccountRepository
+{
+    public string GetNextAccountNumber()
+    {
+        // Warning: Extremely costly operation!
+        // Try to find a solution for such problems
+        var lastGeneratedNumber = DbSet.Select(c => long.Parse(c.AccountNumber)).ToList().Max();
+        return (lastGeneratedNumber + 1).ToString();
+    }
+
+    public bool HasDefaultAccount()
+    {
+        return DbSet.Any(c => c.IsDefaultAccount);
+    }
+
+    public void DeleteAccountByNumber(string accountNumber)
+    {
+        try
+        {
+            var account = DbSet.First(account => account.AccountNumber == accountNumber);
+            account.MarkAsDeleted();
+            DbSet.Update(account);
+        }
+        catch (Exception ex)
+        {
+            throw new AccountNotFoundException(accountNumber, ex);
+        }
+    }
+
+    public async Task<Account> GetAccountByNumber(string accountNumber)
+    {
+        try
+        {
+            return await DbSet.FirstAsync(a => a.AccountNumber == accountNumber);
+        }
+        catch (Exception ex)
+        {
+            throw new AccountNotFoundException(accountNumber, ex);
+        }
+    }
+
+    public async Task<Account> GetDefaultAccount()
+    {
+        try
+        {
+            return await DbSet.FirstAsync(c => c.IsDefaultAccount);
+        }
+        catch (Exception e)
+        {
+            throw new DefaultAccountNotFoundException(e);
+        }
+    }
+
+    public async Task<bool> Exists(string accountNumber)
+    {
+        return await DbSet.AnyAsync(a => a.AccountNumber == accountNumber);
+    }
+}
