@@ -1,6 +1,6 @@
 ﻿using Xpense.Core.Abstract.Entities;
 
-namespace Xpense.Core.Entities
+namespace Xpense.Core.Models
 {
     public class Priority : BaseEntity, IEquatable<Priority>
     {

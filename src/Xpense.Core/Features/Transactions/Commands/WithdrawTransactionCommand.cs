@@ -3,12 +3,12 @@ using Xpense.Core.ValueObjects;
 
 namespace Xpense.Core.Features.Transactions.Commands;
 
-public class WithdrawTransactionCommand(Money amount, string accountNumber, int category, Merchant merchant, Tag[]? tags = null, long? createdOn = null)
+public class WithdrawTransactionCommand(Money amount, string accountNumber, int category, MerchantOption merchantOption, TagOption[]? tags = null, long? createdOn = null)
 {
     public Money Amount { get; set; } = amount;
     public long? CreatedOn { get; set; } = createdOn;
     public string AccountNumber { get; set; } = accountNumber;
     public int CategoryId { get; set; } = category;
-    public Merchant Merchant { get; set; } = merchant;
-    public Tag[]? Tags { get; set; } = tags;
+    public MerchantOption merchantOption { get; set; } = merchantOption;
+    public TagOption[]? Tags { get; set; } = tags;
 }

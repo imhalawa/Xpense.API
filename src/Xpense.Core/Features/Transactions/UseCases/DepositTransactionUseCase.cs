@@ -1,10 +1,10 @@
 using Xpense.Core.Abstract.Persistence;
 using Xpense.Core.Abstract.UseCases;
-using Xpense.Core.Entities;
 using Xpense.Core.Enums;
 using Xpense.Core.Exceptions;
 using Xpense.Core.Features.Transactions.Commands;
 using Xpense.Core.Helpers;
+using Xpense.Core.Models;
 
 namespace Xpense.Core.Features.Transactions.UseCases;
 
@@ -29,7 +29,7 @@ public class DepositTransactionUseCase(
 
         account.Deposit(command.Amount.ToSingle());
 
-        var merchant = await merchantRepository.GetOrCreateIfMissing(command.Merchant) ?? throw new MerchantNotFoundException(command.Merchant.Label);
+        var merchant = await merchantRepository.GetOrCreateIfMissing(command.merchantOption) ?? throw new MerchantNotFoundException(command.merchantOption.Label);
 
         var tags = command.Tags != null
             ? await command.Tags.ToAsyncEnumerable()

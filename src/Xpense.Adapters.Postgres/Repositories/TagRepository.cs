@@ -1,5 +1,5 @@
 using Xpense.Core.Abstract.Persistence;
-using Xpense.Core.Entities;
+using Xpense.Core.Models;
 
 namespace Xpense.Persistence.Repositories;
 

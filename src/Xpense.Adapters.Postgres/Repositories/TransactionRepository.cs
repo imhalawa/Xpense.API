@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Xpense.Core.Abstract.Persistence;
-using Xpense.Core.Entities;
 using Xpense.Core.Helpers;
 using Xpense.Core.Models;
 

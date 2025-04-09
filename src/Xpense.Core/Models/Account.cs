@@ -1,6 +1,6 @@
 ﻿using Xpense.Core.Abstract.Entities;
 
-namespace Xpense.Core.Entities
+namespace Xpense.Core.Models
 {
     /// <summary>Account Entity</summary>
     public class Account : BaseEntity, IEquatable<Account>

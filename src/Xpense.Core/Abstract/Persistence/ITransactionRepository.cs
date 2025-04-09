@@ -1,5 +1,3 @@
-
-using Xpense.Core.Entities;
 using Xpense.Core.Models;
 
 namespace Xpense.Core.Abstract.Persistence;

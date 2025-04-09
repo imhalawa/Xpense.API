@@ -1,7 +1,7 @@
 ﻿using Xpense.Core.Abstract.Entities;
 using Xpense.Core.Enums;
 
-namespace Xpense.Core.Entities
+namespace Xpense.Core.Models
 {
     public class Transaction : BaseEntity
     {

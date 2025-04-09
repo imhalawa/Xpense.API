@@ -1,24 +1,12 @@
-﻿using Xpense.Core.Abstract.Models;
+﻿using Xpense.Core.Abstract.Entities;
 
-namespace Xpense.Core.Models
+namespace Xpense.Core.Models;
+
+public class Tag : BaseEntity, IOptionEntity
 {
-    public class Tag : IOption<Entities.Tag>
-    {
-        public int? Id { get; set; }
-        public required string Label { get; set; }
-        public bool Create { get; set; } = false;
+    public required string Label { get; set; }
+    public string? BgColorHex { get; set; }
+    public string? FgColorHex { get; set; }
 
-        public Entities.Tag ToEntity()
-        {
-            return new Entities.Tag
-            {
-                Label = this.Label,
-                CreatedOn = DateTime.Now
-            };
-        }
-        public static IEnumerable<Entities.Tag> ToEntityRange(IEnumerable<Tag> tags)
-        {
-            return tags.Select(t => t.ToEntity());
-        }
-    }
+    public virtual ICollection<Transaction> Transactions { get; set; }
 }

@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using Xpense.Core.Models;
 using Xpense.Persistence;
-using Xpense.Core.Entities;
 using Xpense.RestApi.Extensions.cs;
 
 var builder = WebApplication.CreateBuilder(args);

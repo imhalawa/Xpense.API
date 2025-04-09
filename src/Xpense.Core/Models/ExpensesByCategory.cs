@@ -1,5 +1,4 @@
-﻿using Xpense.Core.Entities;
-using Xpense.Core.ValueObjects;
+﻿using Xpense.Core.ValueObjects;
 
 namespace Xpense.Core.Models
 {

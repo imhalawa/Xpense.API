@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Xpense.Core.Entities;
 using Xpense.Core.Enums;
+using Xpense.Core.Models;
 using Xpense.Core.ValueObjects;
 namespace Xpense.RestApi.Models;
 

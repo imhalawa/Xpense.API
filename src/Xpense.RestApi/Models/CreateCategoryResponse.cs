@@ -1,5 +1,5 @@
-using Xpense.Core.Entities;
 using Xpense.Core.Enums;
+using Xpense.Core.Models;
 
 namespace Xpense.RestApi.Models;
 

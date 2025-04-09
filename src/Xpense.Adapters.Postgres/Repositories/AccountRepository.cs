@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Xpense.Core.Abstract.Persistence;
-using Xpense.Core.Entities;
 using Xpense.Core.Exceptions;
+using Xpense.Core.Models;
 
 namespace Xpense.Persistence.Repositories;
 

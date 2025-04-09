@@ -1,8 +1,8 @@
 using Xpense.Core.Abstract.Persistence;
 using Xpense.Core.Abstract.UseCases;
-using Xpense.Core.Entities;
 using Xpense.Core.Exceptions;
 using Xpense.Core.Features.Accounts.Commands;
+using Xpense.Core.Models;
 
 namespace Xpense.Core.Features.Accounts.Usecases;
 
