@@ -4,23 +4,18 @@
     <projectFile profileName="Development">src/Xpense.RestApi/Xpense.RestApi.csproj</projectFile>
     <projectFile profileName="Production">src/Xpense.RestApi/Xpense.RestApi.csproj</projectFile>
     <projectFile profileName="Staging">src/Xpense.RestApi/Xpense.RestApi.csproj</projectFile>
+    <projectFile>utils/Xpense.Utils.Postgres.Migrator/Xpense.Utils.Postgres.Migrator.csproj</projectFile>
   </component>
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c1b3104e-31c6-4ed4-b709-b1550f033437" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/Migrations/V20250408032200_Init-xpense-database.sql" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/Schema/TBL_Account.sql" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/Schema/XpenseSchema.sql" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Xpense.Core/Models/MerchantOption.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Xpense.Core/Models/TagOption.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/Repositories/AccountRepository.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/Repositories/AccountRepository.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/Repositories/CategoryRepository.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/Repositories/CategoryRepository.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/Repositories/MerchantRepository.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/Repositories/MerchantRepository.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/Repositories/PriorityRepository.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/Repositories/PriorityRepository.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/Repositories/TagRepository.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/Repositories/TagRepository.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/Repositories/TransactionRepository.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/Repositories/TransactionRepository.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.Xpense/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Xpense/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.Xpense/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Xpense/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Xpense.sln" beforeDir="false" afterPath="$PROJECT_DIR$/Xpense.sln" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/Schema/TBL_Account.sql" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/Schema/XpenseSchema.sql" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/TypeConfiguration/AccountEntityTypeConfiguration.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/TypeConfiguration/AccountEntityTypeConfiguration.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/TypeConfiguration/BaseEntityTypeConfiguration.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/TypeConfiguration/BaseEntityTypeConfiguration.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/TypeConfiguration/CategoryEntityTypeConfiguration.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/TypeConfiguration/CategoryEntityTypeConfiguration.cs" afterDir="false" />
@@ -28,55 +23,10 @@
       <change beforePath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/TypeConfiguration/PriorityEntityTypeConfiguration.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/TypeConfiguration/PriorityEntityTypeConfiguration.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/TypeConfiguration/TagEntityTypeConfiguration.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/TypeConfiguration/TagEntityTypeConfiguration.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/TypeConfiguration/TransactionEntityTypeConfiguration.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/TypeConfiguration/TransactionEntityTypeConfiguration.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/XpenseDbContext.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/XpenseDbContext.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Abstract/Persistence/IAccountRepository.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Abstract/Persistence/IAccountRepository.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Abstract/Persistence/ICategoryRepository.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Abstract/Persistence/ICategoryRepository.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Abstract/Persistence/IMerchantRepository.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Abstract/Persistence/IMerchantRepository.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Abstract/Persistence/IPriorityRepository.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Abstract/Persistence/IPriorityRepository.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Abstract/Persistence/ITagRepository.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Abstract/Persistence/ITagRepository.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Abstract/Persistence/ITransactionRepository.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Abstract/Persistence/ITransactionRepository.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Entities/Account.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Models/Account.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Entities/Category.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Models/Category.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Entities/Merchant.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Entities/Priority.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Models/Priority.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Entities/Tag.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Entities/Transaction.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Models/Transaction.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Features/Accounts/Usecases/CreateAccountUseCase.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Features/Accounts/Usecases/CreateAccountUseCase.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Features/Accounts/Usecases/GetAccountByNumberUseCase.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Features/Accounts/Usecases/GetAccountByNumberUseCase.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Features/Accounts/Usecases/GetAllAccountsUseCase.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Features/Accounts/Usecases/GetAllAccountsUseCase.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Features/Accounts/Usecases/UpdateAccountUseCase.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Features/Accounts/Usecases/UpdateAccountUseCase.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Features/Categories/UseCases/CreateCategoryUseCase.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Features/Categories/UseCases/CreateCategoryUseCase.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Features/Categories/UseCases/GetAllCategoriesUseCase.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Features/Categories/UseCases/GetAllCategoriesUseCase.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Features/Categories/UseCases/GetCategoryByIdUseCase.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Features/Categories/UseCases/GetCategoryByIdUseCase.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Features/Categories/UseCases/UpdateCategoryUseCase.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Features/Categories/UseCases/UpdateCategoryUseCase.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Features/Merchants/UseCases/GetAllMerchantsUseCase.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Features/Merchants/UseCases/GetAllMerchantsUseCase.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Features/Tags/Commands/CreateTagCommand.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Features/Tags/Commands/CreateTagCommand.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Features/Tags/UseCases/CreateTagUseCase.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Features/Tags/UseCases/CreateTagUseCase.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Features/Tags/UseCases/GetAllTagsUseCase.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Features/Tags/UseCases/GetAllTagsUseCase.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Features/Tags/UseCases/GetTagByIdUseCase.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Features/Tags/UseCases/GetTagByIdUseCase.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Features/Tags/UseCases/UpdateTagUseCase.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Features/Tags/UseCases/UpdateTagUseCase.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Features/Transactions/Commands/DepositTransactionCommand.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Features/Transactions/Commands/DepositTransactionCommand.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Features/Transactions/Commands/WithdrawTransactionCommand.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Features/Transactions/Commands/WithdrawTransactionCommand.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Features/Transactions/UseCases/DepositTransactionUseCase.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Features/Transactions/UseCases/DepositTransactionUseCase.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Features/Transactions/UseCases/FilterTransactionsUseCase.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Features/Transactions/UseCases/FilterTransactionsUseCase.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Features/Transactions/UseCases/GetAllTransactionsForAccountNumberUseCase.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Features/Transactions/UseCases/GetAllTransactionsForAccountNumberUseCase.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Features/Transactions/UseCases/GetAllTransactionsUseCase.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Features/Transactions/UseCases/GetAllTransactionsUseCase.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Features/Transactions/UseCases/WithdrawTransactionUseCase.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Features/Transactions/UseCases/WithdrawTransactionUseCase.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Models/ExpensesByCategory.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Models/ExpensesByCategory.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Models/Merchant.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Models/Merchant.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.Core/Models/Tag.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Core/Models/Tag.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.RestApi/Models/AccountResponse.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.RestApi/Models/AccountResponse.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.RestApi/Models/CategoryResponse.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.RestApi/Models/CategoryResponse.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.RestApi/Models/CreateAccountResponse.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.RestApi/Models/CreateAccountResponse.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.RestApi/Models/CreateCategoryResponse.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.RestApi/Models/CreateCategoryResponse.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.RestApi/Models/CreateTagResponse.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.RestApi/Models/CreateTagResponse.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.RestApi/Models/DepositTransactionRequest.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.RestApi/Models/DepositTransactionRequest.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.RestApi/Models/MerchantResponse.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.RestApi/Models/MerchantResponse.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.RestApi/Models/PriorityResponse.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.RestApi/Models/PriorityResponse.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.RestApi/Models/TagResponse.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.RestApi/Models/TagResponse.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.RestApi/Models/TransactionResponse.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.RestApi/Models/TransactionResponse.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Xpense.RestApi/Models/WithdrawTransactionRequest.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.RestApi/Models/WithdrawTransactionRequest.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/Xpense.Adapters.Postgres.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.Adapters.Postgres/Xpense.Adapters.Postgres.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Xpense.RestApi/Extensions.cs/IoC.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.RestApi/Extensions.cs/IoC.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Xpense.RestApi/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.RestApi/Program.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Xpense.RestApi/appsettings.Development.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/Xpense.RestApi/appsettings.Development.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -86,15 +36,27 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="KubernetesApiPersistence"><![CDATA[{}]]></component>
-  <component name="KubernetesApiProvider"><![CDATA[{
-  "isMigrated": true
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "imhalawa"
+  }
 }]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "git@github.com:imhalawa/Xpense.API.git",
+    "accountId": "f7790598-4c07-4892-8b84-61c535f9ef88"
+  }
+}]]></component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
-  <component name="ProjectColorInfo"><![CDATA[{
-  "customColor": "",
-  "associatedIndex": 2
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 2
+}</component>
   <component name="ProjectId" id="2vQLQ3HIiKHSp9UGmxJoRMjr0mI" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -102,7 +64,8 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "Docker.docker-compose.yml: Compose Deployment.executor": "Run",
+    ".NET Project.Xpense.Utils.Postgres.Migrator.executor": "Debug",
+    "Docker.docker-compose.yml: Compose Deployment.executor": "Debug",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "refactor/restructured-solution",
@@ -119,7 +82,25 @@
     ]
   }
 }]]></component>
-  <component name="RunManager" selected="Docker.docker-compose.yml: Compose Deployment">
+  <component name="RunManager" selected=".NET Project.Xpense.Utils.Postgres.Migrator">
+    <configuration name="Xpense.Utils.Postgres.Migrator" type="DotNetProject" factoryName=".NET Project">
+      <option name="EXE_PATH" value="" />
+      <option name="PROGRAM_PARAMETERS" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="PASS_PARENT_ENVS" value="1" />
+      <option name="USE_EXTERNAL_CONSOLE" value="0" />
+      <option name="USE_MONO" value="0" />
+      <option name="RUNTIME_ARGUMENTS" value="" />
+      <option name="PROJECT_PATH" value="$PROJECT_DIR$/utils/Xpense.Utils.Postgres.Migrator/Xpense.Utils.Postgres.Migrator.csproj" />
+      <option name="PROJECT_EXE_PATH_TRACKING" value="1" />
+      <option name="PROJECT_ARGUMENTS_TRACKING" value="1" />
+      <option name="PROJECT_WORKING_DIRECTORY_TRACKING" value="1" />
+      <option name="PROJECT_KIND" value="DotNetCore" />
+      <option name="PROJECT_TFM" value="" />
+      <method v="2">
+        <option name="Build" />
+      </method>
+    </configuration>
     <configuration name="Xpense.RestApi: Development" type="LaunchSettings" factoryName=".NET Launch Settings Profile">
       <option name="LAUNCH_PROFILE_PROJECT_FILE_PATH" value="$PROJECT_DIR$/src/Xpense.RestApi/Xpense.RestApi.csproj" />
       <option name="LAUNCH_PROFILE_TFM" value="net8.0" />
@@ -166,7 +147,10 @@
       </method>
     </configuration>
     <configuration default="true" type="docker-deploy" factoryName="docker-compose.yml" temporary="true">
-      <deployment type="docker-compose.yml" />
+      <deployment type="docker-compose.yml">
+        <settings />
+      </deployment>
+      <EXTENSION ID="com.jetbrains.rider.docker.debug" isFastModeEnabled="true" isSslEnabled="false" />
       <method v="2" />
     </configuration>
     <configuration name="docker-compose.yml: Compose Deployment" type="docker-deploy" factoryName="docker-compose.yml" temporary="true" server-name="Docker">
@@ -193,6 +177,7 @@
       <option name="presentableId" value="Default" />
       <updated>1744072332995</updated>
       <workItem from="1744072335357" duration="7732000" />
+      <workItem from="1744162573111" duration="2998000" />
     </task>
     <servers />
   </component>
@@ -201,6 +186,25 @@
   </component>
   <component name="UnityCheckinConfiguration" checkUnsavedScenes="true" />
   <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
+  <component name="UnknownFeatures">
+    <option featureType="dependencySupport" implementationName="executable:docker" />
+    <option featureType="dependencySupport" implementationName="dotnet:Microsoft.Identity.Client" />
+    <option featureType="dependencySupport" implementationName="executable:kubectl" />
+    <option featureType="dependencySupport" implementationName="dotnet:Microsoft.EntityFrameworkCore.Abstractions" />
+    <option featureType="dependencySupport" implementationName="dotnet:Microsoft.EntityFrameworkCore.Relational" />
+    <option featureType="dependencySupport" implementationName="dotnet:Microsoft.EntityFrameworkCore" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
   </component>

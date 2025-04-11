@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Xpense.Adpaters.Postgres.TypeConfiguration;
+using Xpense.Adapters.Postgres.TypeConfiguration;
 using Xpense.Core.Models;
 
 namespace Xpense.Persistence.TypeConfiguration

@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Xpense.Core.Abstract.Entities;
 
-namespace Xpense.Adpaters.Postgres.TypeConfiguration
+namespace Xpense.Adapters.Postgres.TypeConfiguration
 {
     public class BaseEntityTypeConfiguration<T> : IEntityTypeConfiguration<T> where T : BaseEntity
     {

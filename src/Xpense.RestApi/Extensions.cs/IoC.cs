@@ -7,7 +7,6 @@ using System;
 using System.IO;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
-using Xpense.Persistence;
 using Xpense.Persistence.Repositories;
 using Xpense.Core.Abstract.Persistence;
 using Xpense.Core.Features.Accounts.Usecases;
@@ -16,6 +15,7 @@ using Xpense.Core.Features.Categories.UseCases;
 using Xpense.Core.Features.Merchants.UseCases;
 using Xpense.Core.Features.Tags.UseCases;
 using Xpense.Core.Features.Transactions.UseCases;
+using Xpense.Adapters.Postgres.Postgres;
 
 
 namespace Xpense.RestApi.Extensions.cs
@@ -27,10 +27,7 @@ namespace Xpense.RestApi.Extensions.cs
             IConfiguration configuration
         )
         {
-            services.AddDbContext<XpenseDbContext>(optionsBuilder =>
-            {
-                optionsBuilder.UseSqlServer(configuration.GetConnectionString("DefaultConnection"), x => x.MigrationsAssembly("Xpense.Adapters.Postgres"));
-            });
+            services.AddSingleton(_ => new DatabaseInitializer(configuration.GetConnectionString("DefaultConnection")));
         }
 
         public static void ConfigureSwagger(this IServiceCollection services)

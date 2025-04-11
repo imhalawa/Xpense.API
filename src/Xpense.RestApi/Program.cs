@@ -23,9 +23,9 @@ builder.Services.AddSingleton(Log.Logger);
 builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.ConfigureSwagger();
 builder.Services.ConfigurePersistence(builder.Configuration);
-builder.Services.AddRepositories();
-builder.Services.AddUseCases();
-builder.Services.ConfigureApiVersioning();
+// builder.Services.AddRepositories();
+// builder.Services.AddUseCases();
+// builder.Services.ConfigureApiVersioning();
 
 var app = builder.Build();
 
