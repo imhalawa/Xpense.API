@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Xpense.Adapters.Postgres.TypeConfiguration;
 using Xpense.Core.Models;
 
-namespace Xpense.Persistence.TypeConfiguration
+namespace Xpense.Adapters.Postgres.TypeConfiguration
 {
     public class CategoryEntityTypeConfiguration : BaseEntityTypeConfiguration<Category>
     {
