@@ -28,11 +28,6 @@
     <ProjectReference Include="..\Xpense.Core\Xpense.Core.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Remove="Postgres\Scripts\*.sql" />
-    <EmbeddedResource Include="Postgres\Scripts\*.sql">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
+
 
 </Project>
