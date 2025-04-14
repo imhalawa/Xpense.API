@@ -1,6 +1,7 @@
-﻿public enum HostingEnvironment
+﻿namespace Xpense.Utils.Postgres.Migrator.Enums;
+
+public enum HostingEnvironment
 {
     Development,
-    Docker,
     Production
 }

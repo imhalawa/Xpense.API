@@ -1,4 +1,5 @@
-﻿using Xpense.Utils.Postgres.Migrator.Exceptions;
+﻿using Xpense.Utils.Postgres.Migrator.Enums;
+using Xpense.Utils.Postgres.Migrator.Exceptions;
 
 namespace Xpense.Utils.Postgres.Migrator.Helpers
 {
@@ -16,7 +17,6 @@ namespace Xpense.Utils.Postgres.Migrator.Helpers
             return environment.ToLower() switch
             {
                 "development" => HostingEnvironment.Development,
-                "docker" => HostingEnvironment.Docker,
                 "production" => HostingEnvironment.Production,
                 _ => throw new UnknownHostingEnvironment(environment),
             };

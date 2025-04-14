@@ -21,10 +21,8 @@ services:
       context: ./db
       dockerfile: ../db/Xpense.Utils.Postgres.Migrator/Dockerfile
     depends_on:
-      postgres:
+      xpense-postgres:
         condition: service_healthy
-    environment:
-      DOTNET_ENVIRONMENT: Docker
 
 volumes:
   postgres-data:
