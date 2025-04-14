@@ -1,5 +1,5 @@
 services:   
-  xpense-postgres:
+  postgres:
     image: postgres
     restart: always
     shm_size: 128mb
@@ -9,11 +9,20 @@ services:
       - 5432:5432
     volumes:
       - postgres-data:/var/lib/postgresql/data
-  xpense-postgres-admin:
-    image: adminer
-    restart: always
-    ports:
-      - 8080:8080
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  db-migrator:
+    build:
+      context: ./db
+      dockerfile: ../db/Xpense.Utils.Postgres.Migrator/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DOTNET_ENVIRONMENT: Docker
 
 volumes:
   postgres-data:

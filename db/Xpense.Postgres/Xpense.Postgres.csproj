@@ -1,14 +1,52 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="dbup-core" Version="6.0.4" />
-    <PackageReference Include="dbup-postgresql" Version="6.0.3" />
-  </ItemGroup>
+	<PropertyGroup>
+		<PublishTrimmed>false</PublishTrimmed>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Remove="Scripts\Script0001_Create-Xpense-Schema.sql" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Include="Scripts\Script0009_Create-TransactionTag-Table.sql">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</EmbeddedResource>
+		<EmbeddedResource Include="Scripts\Script0008_Create-Transaction-Table.sql">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</EmbeddedResource>
+		<EmbeddedResource Include="Scripts\Script0007_Create-Currency-Table.sql">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</EmbeddedResource>
+		<EmbeddedResource Include="Scripts\Script0006_Create-Tag-Table.sql">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</EmbeddedResource>
+		<EmbeddedResource Include="Scripts\Script0005_Create-Merchant-Table.sql">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</EmbeddedResource>
+		<EmbeddedResource Include="Scripts\Script0004_Create-Category-Table.sql">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</EmbeddedResource>
+		<EmbeddedResource Include="Scripts\Script0003_Create-Priority-Table.sql">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</EmbeddedResource>
+		<EmbeddedResource Include="Scripts\Script0002_Create-Account-Table.sql">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</EmbeddedResource>
+		<EmbeddedResource Include="Scripts\Script0001_Create-Xpense-Schema.sql">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</EmbeddedResource>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="dbup-core" Version="6.0.4" />
+		<PackageReference Include="dbup-postgresql" Version="6.0.3" />
+	</ItemGroup>
 
 </Project>

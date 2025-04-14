@@ -6,7 +6,7 @@ namespace Xpense.Utils.Postgres.Migrator.Helpers
     {
         public static HostingEnvironment TryGetEnvironment()
         {
-            var variable = "DOTNET_ENVIRONMENT";
+            const string variable = "DOTNET_ENVIRONMENT";
             var environment = Environment.GetEnvironmentVariable(variable);
             if (string.IsNullOrWhiteSpace(environment))
             {
@@ -16,6 +16,7 @@ namespace Xpense.Utils.Postgres.Migrator.Helpers
             return environment.ToLower() switch
             {
                 "development" => HostingEnvironment.Development,
+                "docker" => HostingEnvironment.Docker,
                 "production" => HostingEnvironment.Production,
                 _ => throw new UnknownHostingEnvironment(environment),
             };

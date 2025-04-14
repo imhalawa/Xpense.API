@@ -5,7 +5,7 @@
             "server": "localhost",
             "port": 5432,
             "driver": "PostgreSQL",
-            "name": "Xpense",
+            "name": "devxpense",
             "database": "devxpense",
             "username": "postgres",
             "password": "password"

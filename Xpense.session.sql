@@ -1,1 +1,0 @@
-Drop DATABASE IF EXISTS devxpense;

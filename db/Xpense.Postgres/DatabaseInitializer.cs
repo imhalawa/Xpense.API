@@ -10,21 +10,22 @@ public class DatabaseInitializer
 
     public DatabaseInitializer(string? connectionString)
     {
-        ArgumentNullException.ThrowIfNull(connectionString);
-        
-        _connectionString = connectionString;
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString, nameof(connectionString));
+        _connectionString = connectionString;
     }
 
     public void Initialize()
     {
         EnsureDatabase.For.PostgresqlDatabase(_connectionString);
-        var upgrader = DeployChanges.To.PostgresqlDatabase(_connectionString)
+        var upgrade = DeployChanges
+            .To.PostgresqlDatabase(_connectionString)
             .WithScriptsEmbeddedInAssembly(Assembly.GetExecutingAssembly())
+            .WithTransactionPerScript()
             .LogToConsole()
+            .LogScriptOutput()
             .Build();
 
-        var result = upgrader.PerformUpgrade();
+        var result = upgrade.PerformUpgrade();
 
         if (!result.Successful)
             throw new DatabaseInitializationException();
