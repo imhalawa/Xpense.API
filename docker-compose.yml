@@ -1,5 +1,6 @@
 services:   
-  postgres:
+  xpense-postgres:
+    container_name: 'xpense-postgres'
     image: postgres
     restart: always
     shm_size: 128mb
@@ -14,7 +15,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-  db-migrator:
+  xpense-postgres-migrator:
+    container_name: 'xpense-postgres-migrator'
     build:
       context: ./db
       dockerfile: ../db/Xpense.Utils.Postgres.Migrator/Dockerfile
