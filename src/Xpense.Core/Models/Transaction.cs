@@ -1,5 +1,5 @@
-﻿using Xpense.Core.Abstract.Entities;
-using Xpense.Core.Enums;
+﻿using Xpense.Core.Enums;
+using Xpense.Core.Interfaces.Entities;
 
 namespace Xpense.Core.Models
 {

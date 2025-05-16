@@ -8,7 +8,6 @@ using System.IO;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Xpense.Persistence.Repositories;
-using Xpense.Core.Abstract.Persistence;
 using Xpense.Core.Features.Accounts.Usecases;
 using Xpense.Core.Features.Analytics.UseCases;
 using Xpense.Core.Features.Categories.UseCases;
@@ -16,6 +15,8 @@ using Xpense.Core.Features.Merchants.UseCases;
 using Xpense.Core.Features.Tags.UseCases;
 using Xpense.Core.Features.Transactions.UseCases;
 using Xpense.Adapters.Postgres.Postgres;
+using Xpense.Core.Interfaces.Persistence;
+using Xpense.Adapters.Postgres.Repositories;
 
 
 namespace Xpense.RestApi.Extensions.cs

@@ -23,6 +23,34 @@ services:
     depends_on:
       xpense-postgres:
         condition: service_healthy
-
+    environment:
+      - DOTNET_ENVIRONMENT=Development
+  xpense-postgres-test:
+    container_name: 'xpense-postgres-test'
+    image: postgres
+    restart: always
+    shm_size: 128mb
+    environment:
+      POSTGRES_PASSWORD: 'password'
+    ports:
+      - 4321:5432
+    volumes:
+      - postgres-data-test:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  xpense-postgres-test-migrator:
+    container_name: 'xpense-postgres-test-migrator'
+    build:
+      context: ./db
+      dockerfile: ../db/Xpense.Utils.Postgres.Migrator/Dockerfile
+    depends_on:
+      xpense-postgres-test:
+        condition: service_healthy
+    environment:
+      - DOTNET_ENVIRONMENT=Testing
 volumes:
   postgres-data:
+  postgres-data-test:

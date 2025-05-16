@@ -1,4 +1,4 @@
-﻿using Xpense.Core.Abstract.Models;
+﻿using Xpense.Core.Interfaces.Models;
 
 namespace Xpense.Core.Models
 {

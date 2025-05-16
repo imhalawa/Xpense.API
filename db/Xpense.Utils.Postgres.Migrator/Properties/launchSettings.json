@@ -1,10 +1,7 @@
 {
   "profiles": {
     "Dev - Xpense.Utils.Postgres.Migrator": {
-      "commandName": "Project",
-      "environmentVariables": {
-        "DOTNET_ENVIRONMENT": "Development"
-      }
+      "commandName": "Project"
     },
     "Prod - Xpense.Utils.Postgres.Migrator": {
       "commandName": "Project",

@@ -1,3 +1,4 @@
+using Xpense.Adapters.Postgres;
 using Xpense.Core.Features.Transactions.Commands;
 using Xpense.Core.Models;
 using Xpense.Core.ValueObjects;

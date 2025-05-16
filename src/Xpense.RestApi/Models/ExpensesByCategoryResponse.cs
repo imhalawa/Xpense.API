@@ -1,4 +1,5 @@
-﻿using Xpense.Core.Models;
+﻿using Xpense.Adapters.Postgres;
+using Xpense.Core.Models;
 using Xpense.Core.ValueObjects;
 
 namespace Xpense.RestApi.Models

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Linq;
 using System.Text.Json;
-using Xpense.Core.Abstract.Entities;
+using Xpense.Core.Interfaces.Entities;
 using Xpense.Core.Models;
 using Xpense.RestApi.Models;
 

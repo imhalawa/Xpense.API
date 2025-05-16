@@ -17,8 +17,9 @@ namespace Xpense.Utils.Postgres.Migrator.Helpers
             return environment.ToLower() switch
             {
                 "development" => HostingEnvironment.Development,
+                "testing" => HostingEnvironment.Testing,
                 "production" => HostingEnvironment.Production,
-                _ => throw new UnknownHostingEnvironment(environment),
+                _ => throw new UnknownHostingEnvironment(environment)
             };
         }
 

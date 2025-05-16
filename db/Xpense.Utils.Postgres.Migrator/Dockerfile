@@ -11,9 +11,4 @@ WORKDIR /app
 
 COPY --from=build /app/publish .
 
-# If you want to make sure appsettings.json is included explicitly:
-# COPY ./Xpense.Utils.Postgres.Migrator/appsettings.json ./appsettings.json
-
 ENTRYPOINT ["dotnet", "Xpense.Utils.Postgres.Migrator.dll"]
-
-ENV ConnectionStrings__DefaultConnection="Server=xpense-postgres;Port=5432;Database=devxpense;User Id=postgres;Password=password"

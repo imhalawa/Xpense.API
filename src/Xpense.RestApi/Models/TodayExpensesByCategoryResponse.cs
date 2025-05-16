@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Xpense.Adapters.Postgres;
 using Xpense.Core.Models;
 using Xpense.Core.ValueObjects;
 

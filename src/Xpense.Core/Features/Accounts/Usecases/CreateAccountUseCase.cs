@@ -1,7 +1,7 @@
-﻿using Xpense.Core.Abstract.Persistence;
-using Xpense.Core.Abstract.UseCases;
-using Xpense.Core.Exceptions;
+﻿using Xpense.Core.Exceptions;
 using Xpense.Core.Features.Accounts.Commands;
+using Xpense.Core.Interfaces.Persistence;
+using Xpense.Core.Interfaces.UseCases;
 using Xpense.Core.Models;
 
 namespace Xpense.Core.Features.Accounts.Usecases;
@@ -10,11 +10,12 @@ public class CreateAccountUseCase(IAccountRepository repository) : ICommandResul
 {
     public async Task<Account> Handle(CreateAccountCommand request)
     {
+        var accountNumber = await repository.GetNextAccountNumber();
         var account = new Account()
         {
             Name = request.Name,
             Balance = request.Balance,
-            AccountNumber = repository.GetNextAccountNumber(),
+            AccountNumber = accountNumber.Data,
             IsDefaultAccount = !repository.HasDefaultAccount(),
         };
 

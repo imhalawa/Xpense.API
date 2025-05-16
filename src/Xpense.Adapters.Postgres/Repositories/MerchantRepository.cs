@@ -1,10 +1,9 @@
-﻿using Xpense.Core.Abstract.Persistence;
-using Xpense.Core.Models;
+﻿using System.Data;
 
-namespace Xpense.Persistence.Repositories
+namespace Xpense.Adapters.Postgres.Repositories
 {
-    public class MerchantRepository(XpenseDbContext context) : OptionRepository<Merchant>(context), IMerchantRepository
-    {
+    //public class MerchantRepository(IDbConnection connection) : OptionRepository<Merchant>(context), IMerchantRepository
+    //{
 
-    }
+    //}
 }

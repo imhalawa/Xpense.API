@@ -1,73 +1,75 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Xpense.Core.Abstract.Entities;
-using Xpense.Core.Abstract.Models;
-using Xpense.Core.Abstract.Persistence;
+﻿
 
-namespace Xpense.Persistence.Repositories
-{
-    public class OptionRepository<T>(XpenseDbContext context) : Repository<T>(context), IOptionRepository<T> where T : BaseEntity, IOptionEntity
-    {
-        public async Task<T?> GetByLabel(string label, bool ignoreFilters = false)
-        {
-            return !ignoreFilters
-                ? await DbSet.FirstOrDefaultAsync(m => m.Label == label)
-                : await DbSet.IgnoreQueryFilters().FirstOrDefaultAsync(m => m.Label == label);
-        }
+//using Microsoft.EntityFrameworkCore;
+//using Xpense.Core.Interfaces.Entities;
+//using Xpense.Core.Interfaces.Models;
+//using Xpense.Core.Interfaces.Persistence;
 
-        public bool TryRestore(string label, out T? result)
-        {
-            var entity = GetByLabel(label, true).Result;
-            var isRestored = Restore(entity).Result;
-            result = isRestored ? entity : null;
-            return isRestored;
-        }
+//namespace Xpense.Persistence.Repositories
+//{
+//    public class OptionRepository<T>(XpenseDbContext context) : Repository<T>(context), IOptionRepository<T> where T : BaseEntity, IOptionEntity
+//    {
+//        public async Task<T?> GetByLabel(string label, bool ignoreFilters = false)
+//        {
+//            return !ignoreFilters
+//                ? await DbSet.FirstOrDefaultAsync(m => m.Label == label)
+//                : await DbSet.IgnoreQueryFilters().FirstOrDefaultAsync(m => m.Label == label);
+//        }
 
-        public async Task<T?> GetOrCreateIfMissing<K>(K model) where K : IOption<T>
-        {
-            // Potential Issues, in order to resolve an entity ~3 database calls are needed
-            if (!model.Create && !model.Id.HasValue)
-            {
-                return null;
-            }
+//        public bool TryRestore(string label, out T? result)
+//        {
+//            var entity = GetByLabel(label, true).Result;
+//            var isRestored = Restore(entity).Result;
+//            result = isRestored ? entity : null;
+//            return isRestored;
+//        }
 
-            var result = model.ToEntity();
+//        public async Task<T?> GetOrCreateIfMissing<K>(K model) where K : IOption<T>
+//        {
+//            // Potential Issues, in order to resolve an entity ~3 database calls are needed
+//            if (!model.Create && !model.Id.HasValue)
+//            {
+//                return null;
+//            }
 
-            switch (model.Create)
-            {
-                case true when !model.Id.HasValue && !string.IsNullOrWhiteSpace(model.Label):
-                    {
-                        var existingEntity = await GetByLabel(model.Label);
-                        if (existingEntity != null)
-                            result = existingEntity;
+//            var result = model.ToEntity();
 
-                        if (TryRestore(model.Label, out var restored))
-                        {
-                            result = restored;
-                        }
+//            switch (model.Create)
+//            {
+//                case true when !model.Id.HasValue && !string.IsNullOrWhiteSpace(model.Label):
+//                    {
+//                        var existingEntity = await GetByLabel(model.Label);
+//                        if (existingEntity != null)
+//                            result = existingEntity;
 
-                        break;
-                    }
-                case false when model.Id.HasValue:
-                    {
-                        var existingEntityById = await GetById(model.Id.Value);
-                        if (existingEntityById != null)
-                            result = existingEntityById;
+//                        if (TryRestore(model.Label, out var restored))
+//                        {
+//                            result = restored;
+//                        }
 
-                        // TODO: Should revisit this, basically it ignores the Id sent by client and attempt to retrieve any tag using the same name
-                        var existingEntityByLabel = await GetByLabel(model.Label);
-                        if (existingEntityByLabel != null)
-                            result = existingEntityByLabel;
+//                        break;
+//                    }
+//                case false when model.Id.HasValue:
+//                    {
+//                        var existingEntityById = await GetById(model.Id.Value);
+//                        if (existingEntityById != null)
+//                            result = existingEntityById;
 
-                        if (TryRestore(model.Id.Value, out var restored))
-                        {
-                            result = restored;
-                        }
+//                        // TODO: Should revisit this, basically it ignores the Id sent by client and attempt to retrieve any tag using the same name
+//                        var existingEntityByLabel = await GetByLabel(model.Label);
+//                        if (existingEntityByLabel != null)
+//                            result = existingEntityByLabel;
 
-                        break;
-                    }
-            }
+//                        if (TryRestore(model.Id.Value, out var restored))
+//                        {
+//                            result = restored;
+//                        }
 
-            return result;
-        }
-    }
-}
+//                        break;
+//                    }
+//            }
+
+//            return result;
+//        }
+//    }
+//}

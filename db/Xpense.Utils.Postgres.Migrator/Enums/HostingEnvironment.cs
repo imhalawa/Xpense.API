@@ -3,5 +3,6 @@
 public enum HostingEnvironment
 {
     Development,
+    Testing,
     Production
 }

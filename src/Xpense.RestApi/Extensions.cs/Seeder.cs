@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using Xpense.Core.Interfaces.Entities;
 using Xpense.Persistence;
-using Xpense.Core.Abstract.Entities;
 
 namespace Xpense.RestApi.Extensions.cs
 {
