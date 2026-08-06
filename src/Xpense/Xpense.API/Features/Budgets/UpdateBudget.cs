@@ -16,10 +16,6 @@ using Xpense.Persistence;
 
 namespace Xpense.API.Features.Budgets;
 
-/// <summary>
-/// Restates a budget's limit and window. The category is not among them: a budget for a different
-/// category is a different budget, the same way an account's currency is fixed for its life.
-/// </summary>
 public sealed class UpdateBudget : IEndpoint
 {
     public sealed record Request(
@@ -59,14 +55,14 @@ public sealed class UpdateBudget : IEndpoint
 
             RuleFor(request => request.EndsOn)
                 .Must((request, endsOn) => endsOn is null || endsOn >= request.StartsOn)
-                .WithMessage("The endsOn date cannot be before startsOn.");
+                .WithMessage("The end date cannot be before the start date.");
 
             // Null is allowed and means this budget says nothing before its limit is passed. The
             // domain guards this too; this is here so a bad value is a 400 rather than a 500.
             RuleFor(request => request.AlertThresholdPercent)
                 .InclusiveBetween(1, 100)
                 .When(request => request.AlertThresholdPercent is not null)
-                .WithMessage("The alertThresholdPercent must be between 1 and 100.");
+                .WithMessage("The alert threshold must be between 1 and 100 percent.");
         }
 
         private static bool IsOneOff(string recurrence) =>
@@ -79,13 +75,13 @@ public sealed class UpdateBudget : IEndpoint
     private static async Task<Ok<BudgetResponse>> Handle(
         int id,
         Request request,
-        XpenseDbContext db,
-        CancellationToken ct)
+        XpenseDbContext dbContext,
+        CancellationToken cancellationToken)
     {
-        var budget = await db.Budgets
+        var budget = await dbContext.Budgets
             .Include(item => item.Category)
             .ThenInclude(category => category!.Priority)
-            .FirstOrDefaultAsync(item => item.Id == id, ct)
+            .FirstOrDefaultAsync(item => item.Id == id, cancellationToken)
             ?? throw new BudgetNotFoundException(id);
 
         CurrencyParser.TryParse(request.Amount.Currency, out var currency);
@@ -98,7 +94,7 @@ public sealed class UpdateBudget : IEndpoint
             request.EndsOn?.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),
             request.AlertThresholdPercent);
 
-        if (await db.SaveChangesAsync(ct) < 1)
+        if (await dbContext.SaveChangesAsync(cancellationToken) < 1)
             throw new BudgetUpdateFailedException(id);
 
         return TypedResults.Ok(BudgetResponse.Of(budget, null));

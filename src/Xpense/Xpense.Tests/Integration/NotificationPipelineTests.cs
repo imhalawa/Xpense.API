@@ -11,15 +11,6 @@ using Xpense.Persistence;
 
 namespace Xpense.Tests.Integration;
 
-/// <summary>
-/// The rules and the pump against real Postgres, because both lean on things only Postgres does --
-/// jsonb columns, a partial unique index, and FOR UPDATE SKIP LOCKED. A fake would prove nothing
-/// about any of them.
-/// <para>
-/// Each test gets its own database, cloned from the migrated template <see cref="PostgresFixture"/>
-/// builds once per run.
-/// </para>
-/// </summary>
 [TestFixture]
 public class NotificationPipelineTests
 {
@@ -35,23 +26,19 @@ public class NotificationPipelineTests
 
     // ---------------------------------------------------------------- emitting
 
-    /// <summary>
-    /// Emit does not save. A caller that never commits has announced nothing, which is what makes the
-    /// event and the thing it describes atomic.
-    /// </summary>
     [Test]
     public async Task Emitting_an_event_writes_nothing_until_the_caller_saves()
     {
-        await using var db = NewDbContext();
-        var bus = new EventBus(db);
+        await using var dbContext = NewDbContext();
+        var bus = new EventBus(dbContext);
 
         await bus.Emit(Event.Of(Expense(amountMinorUnits: 1250, categoryId: 1)));
 
-        (await db.Events.CountAsync()).Should().Be(0, "nothing has been saved yet");
+        (await dbContext.Events.CountAsync()).Should().Be(0, "nothing has been saved yet");
 
-        await db.SaveChangesAsync();
+        await dbContext.SaveChangesAsync();
 
-        (await db.Events.CountAsync()).Should().Be(1);
+        (await dbContext.Events.CountAsync()).Should().Be(1);
     }
 
     [Test]
@@ -59,11 +46,11 @@ public class NotificationPipelineTests
     {
         var body = Expense(amountMinorUnits: 1250, categoryId: 7);
 
-        await using var db = NewDbContext();
-        await new EventBus(db).Emit(Event.Of(body));
-        await db.SaveChangesAsync();
+        await using var dbContext = NewDbContext();
+        await new EventBus(dbContext).Emit(Event.Of(body));
+        await dbContext.SaveChangesAsync();
 
-        var stored = await db.Events.SingleAsync();
+        var stored = await dbContext.Events.SingleAsync();
         stored.Type.Should().Be(nameof(TransactionRecorded));
         stored.ProcessedAt.Should().BeNull("a fresh event is outstanding");
         stored.Attempts.Should().Be(0);
@@ -102,11 +89,6 @@ public class NotificationPipelineTests
         drafts[0].Message.Should().Contain("310.00 EUR").And.Contain("10.00 EUR over");
     }
 
-    /// <summary>
-    /// Fires on the crossing, not the state. Once the limit is behind you, further expenses are a
-    /// different thing that happened and a different rule's business -- otherwise every subsequent
-    /// purchase would repeat the same news.
-    /// </summary>
     [Test]
     public async Task The_rule_says_nothing_when_the_limit_was_already_passed()
     {
@@ -119,7 +101,6 @@ public class NotificationPipelineTests
         drafts.Should().BeEmpty("the crossing already happened on an earlier expense");
     }
 
-    /// <summary>Exactly on the limit is not over it.</summary>
     [Test]
     public async Task The_rule_says_nothing_when_spending_lands_exactly_on_the_limit()
     {
@@ -131,10 +112,6 @@ public class NotificationPipelineTests
         drafts.Should().BeEmpty();
     }
 
-    /// <summary>
-    /// A budget counts one currency. Spending in another cannot exceed it, and must not be converted
-    /// or added in -- that gap is UncountedSpending's business, not this rule's.
-    /// </summary>
     [Test]
     public async Task The_rule_ignores_spending_in_another_currency()
     {
@@ -171,25 +148,21 @@ public class NotificationPipelineTests
         drafts.Should().BeEmpty();
     }
 
-    /// <summary>
-    /// Budgets are independent, so one expense can cross two of them and that is two notifications --
-    /// which is exactly why the deduplication key cannot be the event id alone.
-    /// </summary>
     [Test]
     public async Task One_expense_crossing_two_budgets_produces_two_drafts()
     {
         var seeded = await Seed(limitMinorUnits: 30000);
 
-        await using (var db = NewDbContext())
+        await using (var dbContext = NewDbContext())
         {
-            var category = await db.Categories.SingleAsync(item => item.Id == seeded.CategoryId);
-            db.Budgets.Add(Budget.For(
+            var category = await dbContext.Categories.SingleAsync(item => item.Id == seeded.CategoryId);
+            dbContext.Budgets.Add(Budget.For(
                 category,
                 Money.OfMinorUnits(10000),
                 Recurrence.Weekly,
                 FirstOfThisMonth(),
                 endsOn: null));
-            await db.SaveChangesAsync();
+            await dbContext.SaveChangesAsync();
         }
 
         await SpendEur(seeded, 31000);
@@ -213,8 +186,8 @@ public class NotificationPipelineTests
 
         claimed.Should().Be(1);
 
-        await using var db = NewDbContext();
-        var notification = await db.Notifications.SingleAsync();
+        await using var dbContext = NewDbContext();
+        var notification = await dbContext.Notifications.SingleAsync();
         notification.Kind.Should().Be(NotificationKind.BudgetExceeded);
         notification.ReadAt.Should().BeNull("a new notification is unread");
         notification.PayloadHash.Should().HaveLength(64);
@@ -227,13 +200,9 @@ public class NotificationPipelineTests
         payload["spentMinorUnits"]!.GetValue<long>().Should().Be(31000);
         payload["period"]!.GetValue<string>().Should().Be($"{DateTime.UtcNow:yyyy-MM}");
 
-        (await db.Events.SingleAsync()).ProcessedAt.Should().NotBeNull();
+        (await dbContext.Events.SingleAsync()).ProcessedAt.Should().NotBeNull();
     }
 
-    /// <summary>
-    /// The point of hashing the payload: the same event arriving twice must not say the same thing
-    /// twice. Processing again is exactly what a redelivery looks like.
-    /// </summary>
     [Test]
     public async Task Processing_the_same_event_twice_stores_one_notification()
     {
@@ -244,11 +213,11 @@ public class NotificationPipelineTests
         await Process();
 
         // Put the event back on the queue, as a redelivery would.
-        await using (var db = NewDbContext())
+        await using (var dbContext = NewDbContext())
         {
-            var stored = await db.Events.SingleAsync(item => item.EventId == eventId);
+            var stored = await dbContext.Events.SingleAsync(item => item.EventId == eventId);
             stored.ProcessedAt = null;
-            await db.SaveChangesAsync();
+            await dbContext.SaveChangesAsync();
         }
 
         await Process();
@@ -260,9 +229,9 @@ public class NotificationPipelineTests
     [Test]
     public async Task An_event_nobody_has_a_rule_for_is_marked_processed_rather_than_retried()
     {
-        await using (var db = NewDbContext())
+        await using (var dbContext = NewDbContext())
         {
-            db.Events.Add(new EventRecord
+            dbContext.Events.Add(new EventRecord
             {
                 EventId = Guid.CreateVersion7(),
                 Type = "SomethingNobodyHandles",
@@ -272,7 +241,7 @@ public class NotificationPipelineTests
                 Body = "{}",
                 CreatedAt = DateTime.UtcNow
             });
-            await db.SaveChangesAsync();
+            await dbContext.SaveChangesAsync();
         }
 
         (await Process()).Should().Be(1);
@@ -284,16 +253,12 @@ public class NotificationPipelineTests
         (await verify.Notifications.CountAsync()).Should().Be(0);
     }
 
-    /// <summary>
-    /// A body that cannot be deserialized is a poison message. It must not stall the queue, and it
-    /// must leave enough behind to diagnose from the table alone.
-    /// </summary>
     [Test]
     public async Task An_event_that_cannot_be_processed_records_its_failure_and_is_retried()
     {
-        await using (var db = NewDbContext())
+        await using (var dbContext = NewDbContext())
         {
-            db.Events.Add(new EventRecord
+            dbContext.Events.Add(new EventRecord
             {
                 EventId = Guid.CreateVersion7(),
                 Type = nameof(TransactionRecorded),
@@ -307,7 +272,7 @@ public class NotificationPipelineTests
                 Body = """{"transactionId":"not-a-number"}""",
                 CreatedAt = DateTime.UtcNow
             });
-            await db.SaveChangesAsync();
+            await dbContext.SaveChangesAsync();
         }
 
         await Process();
@@ -322,9 +287,9 @@ public class NotificationPipelineTests
     [Test]
     public async Task An_event_that_keeps_failing_is_eventually_abandoned()
     {
-        await using (var db = NewDbContext())
+        await using (var dbContext = NewDbContext())
         {
-            db.Events.Add(new EventRecord
+            dbContext.Events.Add(new EventRecord
             {
                 EventId = Guid.CreateVersion7(),
                 Type = nameof(TransactionRecorded),
@@ -336,7 +301,7 @@ public class NotificationPipelineTests
                 Attempts = EventRecord.MaxAttempts - 1,
                 CreatedAt = DateTime.UtcNow
             });
-            await db.SaveChangesAsync();
+            await dbContext.SaveChangesAsync();
         }
 
         await Process();
@@ -352,33 +317,29 @@ public class NotificationPipelineTests
 
     private async Task<IReadOnlyList<NotificationDraft>> Evaluate(TransactionRecorded body)
     {
-        await using var db = NewDbContext();
-        return await new BudgetExceededRule(db).Evaluate(Event.Of(body, body.OccurredAt), default);
+        await using var dbContext = NewDbContext();
+        return await new BudgetExceededRule(dbContext).Evaluate(Event.Of(body, body.OccurredAt), default);
     }
 
-    /// <summary>
-    /// Runs one batch, wired the way the worker wires itself -- the real rule behind the real
-    /// dispatcher -- so this exercises discovery and dispatch rather than just the rule.
-    /// </summary>
     private async Task<int> Process()
     {
-        await using var db = NewDbContext();
+        await using var dbContext = NewDbContext();
 
         IEventDispatcher dispatcher = new EventDispatcher<TransactionRecorded>(
-            [new BudgetExceededRule(db)]);
+            [new BudgetExceededRule(dbContext)]);
 
-        var processor = new EventProcessor(db, [dispatcher], NullLogger<EventProcessor>.Instance);
+        var processor = new EventProcessor(dbContext, [dispatcher], NullLogger<EventProcessor>.Instance);
 
         return await processor.ProcessBatch();
     }
 
     private async Task<Guid> EmitExpense(Seeded seeded, long minorUnits)
     {
-        await using var db = NewDbContext();
+        await using var dbContext = NewDbContext();
 
         var @event = Event.Of(Expense(minorUnits, seeded.CategoryId));
-        await new EventBus(db).Emit(@event);
-        await db.SaveChangesAsync();
+        await new EventBus(dbContext).Emit(@event);
+        await dbContext.SaveChangesAsync();
 
         return @event.Attributes.EventId;
     }
@@ -401,7 +362,7 @@ public class NotificationPipelineTests
 
     private async Task<Seeded> Seed(long limitMinorUnits)
     {
-        await using var db = NewDbContext();
+        await using var dbContext = NewDbContext();
 
         var now = DateTime.UtcNow;
         var priority = new Priority { Label = "Normal", Weight = 1, CreatedAt = now };
@@ -424,31 +385,27 @@ public class NotificationPipelineTests
             CreatedAt = now
         };
 
-        db.AddRange(priority, category, merchant, account, usdAccount);
-        await db.SaveChangesAsync();
+        dbContext.AddRange(priority, category, merchant, account, usdAccount);
+        await dbContext.SaveChangesAsync();
 
-        db.Budgets.Add(Budget.For(
+        dbContext.Budgets.Add(Budget.For(
             category,
             Money.OfMinorUnits(limitMinorUnits),
             Recurrence.Monthly,
             FirstOfThisMonth(),
             endsOn: null));
-        await db.SaveChangesAsync();
+        await dbContext.SaveChangesAsync();
 
         return new Seeded(category.Id, merchant.Id, account.Id, usdAccount.Id);
     }
 
     private Task SpendEur(Seeded seeded, long minorUnits) => Spend(seeded, minorUnits, Currency.EUR);
 
-    /// <summary>
-    /// Writes an expense directly rather than through the API, because these tests are about the rule
-    /// reading what is there -- not about how it got there.
-    /// </summary>
     private async Task Spend(Seeded seeded, long minorUnits, Currency currency)
     {
-        await using var db = NewDbContext();
+        await using var dbContext = NewDbContext();
 
-        db.Transactions.Add(new Transaction
+        dbContext.Transactions.Add(new Transaction
         {
             AmountMinorUnits = minorUnits,
             Currency = currency,
@@ -460,7 +417,7 @@ public class NotificationPipelineTests
             CreatedAt = DateTime.UtcNow
         });
 
-        await db.SaveChangesAsync();
+        await dbContext.SaveChangesAsync();
     }
 
     private static DateTime FirstOfThisMonth()

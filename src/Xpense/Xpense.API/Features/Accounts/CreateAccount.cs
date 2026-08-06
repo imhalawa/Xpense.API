@@ -18,7 +18,6 @@ namespace Xpense.API.Features.Accounts;
 
 public sealed class CreateAccount : IEndpoint
 {
-    /// <summary>Account number allocated to the very first account.</summary>
     private const long FirstAccountNumber = 1_000_000_000;
 
     /// <summary>
@@ -57,9 +56,9 @@ public sealed class CreateAccount : IEndpoint
 
     private static async Task<Created<AccountResponse>> Handle(
         Request request,
-        XpenseDbContext db,
-        HttpContext http,
-        CancellationToken ct)
+        XpenseDbContext dbContext,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
     {
         CurrencyParser.TryParse(request.Balance.Currency, out var currency);
 
@@ -68,35 +67,24 @@ public sealed class CreateAccount : IEndpoint
             Label = request.Label,
             BalanceMinorUnits = request.Balance.MinorUnits,
             Currency = currency,
-            AccountNumber = await NextAccountNumber(db, ct),
-            IsDefault = !await db.Accounts.AnyAsync(a => a.IsDefault, ct),
+            AccountNumber = await NextAccountNumber(dbContext, cancellationToken),
+            IsDefault = !await dbContext.Accounts.AnyAsync(a => a.IsDefault, cancellationToken),
             CreatedAt = DateTime.UtcNow
         };
 
-        db.Accounts.Add(account);
+        dbContext.Accounts.Add(account);
 
-        if (await db.SaveChangesAsync(ct) < 1)
+        if (await dbContext.SaveChangesAsync(cancellationToken) < 1)
             throw new AccountCreationFailedException(request.Label);
 
         return TypedResults.Created(
-            http.ResourceUri($"/api/v1/accounts/{account.AccountNumber}"),
+            httpContext.ResourceUri($"/api/v1/accounts/{account.AccountNumber}"),
             AccountResponse.Of(account));
     }
 
-    /// <summary>
-    /// AccountRepository.GetNextAccountNumber called Max() on the parsed numbers, which threw
-    /// InvalidOperationException on an empty table -- creating the very first account crashed.
-    /// Tests never caught it because they always seeded an account first.
-    /// <para>
-    /// ponytail: still loads every number to take the maximum. That races under concurrent creates
-    /// and grows with the table, and it makes the public identifier guessable -- which starts to
-    /// matter once a cross-user transfer can write to an account named by number. Both belong with
-    /// the ownership work; see docs/model-rename-pass.md.
-    /// </para>
-    /// </summary>
-    private static async Task<string> NextAccountNumber(XpenseDbContext db, CancellationToken ct)
+    private static async Task<string> NextAccountNumber(XpenseDbContext dbContext, CancellationToken cancellationToken)
     {
-        var numbers = await db.Accounts.Select(a => a.AccountNumber).ToListAsync(ct);
+        var numbers = await dbContext.Accounts.Select(a => a.AccountNumber).ToListAsync(cancellationToken);
 
         return numbers.Count == 0
             ? FirstAccountNumber.ToString()

@@ -17,7 +17,10 @@ builder.Host.UseSerilog((context, services, configuration) =>
         .WriteTo.Console();
 });
 
-builder.Services.AddSingleton(Log.Logger);
+// Resolved through a factory, not `AddSingleton(Log.Logger)`. That form evaluates Log.Logger here,
+// before UseSerilog has configured it, so the container captured Serilog's silent default and every
+// logger.Error call in the exception handlers wrote to nothing.
+builder.Services.AddSingleton<Serilog.ILogger>(_ => Log.Logger);
 // AddControllers used to bring these in implicitly; without MVC they must be explicit.
 builder.Services.AddCors();
 builder.Services.AddEndpointsApiExplorer();

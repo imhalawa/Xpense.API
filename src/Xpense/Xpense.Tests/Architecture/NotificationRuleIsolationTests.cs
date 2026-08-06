@@ -5,16 +5,6 @@ using Xpense.Notifications.Rules;
 
 namespace Xpense.Tests.Architecture;
 
-/// <summary>
-/// Each notification kind is defined in isolation: its own file, its own detection, its own payload,
-/// its own wording, and no knowledge of any other rule. Rules therefore duplicate each other's
-/// queries, which is the intended state here for the reason AGENTS.md gives for slices -- independence
-/// is worth more than sharing at this size.
-/// <para>
-/// Without this test the arrangement decays the first time two rules want the same query and someone
-/// extracts a helper, at which point changing one kind can change another.
-/// </para>
-/// </summary>
 [TestFixture]
 public class NotificationRuleIsolationTests
 {
@@ -51,10 +41,6 @@ public class NotificationRuleIsolationTests
             + "Xpense.Domain, not in a helper reached from two rules");
     }
 
-    /// <summary>
-    /// Discovery is a scan, so a rule that is not found is a rule that silently never runs. This
-    /// asserts the scan actually resolves what is there.
-    /// </summary>
     [Test]
     public void Every_rule_is_discovered_by_the_registration_scan()
     {
@@ -77,11 +63,6 @@ public class NotificationRuleIsolationTests
         }
     }
 
-    /// <summary>
-    /// A payload is hashed to deduplicate notifications, so anything time-varying inside one makes
-    /// every redelivery look new and duplicates stop being caught. This catches the obvious spelling
-    /// of that mistake.
-    /// </summary>
     [Test]
     public void No_rule_payload_carries_a_timestamp()
     {
@@ -108,7 +89,6 @@ public class NotificationRuleIsolationTests
             && type.Interfaces.Any(@interface =>
                 @interface.InterfaceType.Name.StartsWith("INotificationRule")));
 
-    /// <summary>Base type, interfaces, fields, method signatures, and anything touched from IL.</summary>
     private static IEnumerable<string> ReferencedTypeNames(TypeDefinition type)
     {
         if (type.BaseType is not null) yield return type.BaseType.FullName;

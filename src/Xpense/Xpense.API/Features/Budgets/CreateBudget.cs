@@ -16,11 +16,6 @@ using Xpense.Persistence;
 
 namespace Xpense.API.Features.Budgets;
 
-/// <summary>
-/// States a budget. Nothing checks it against any other budget: several may cover one category at
-/// once and Xpense does not arbitrate, per
-/// docs/adr/0007-budgets-are-independent-of-one-another.md.
-/// </summary>
 public sealed class CreateBudget : IEndpoint
 {
     public sealed record Request(
@@ -38,7 +33,7 @@ public sealed class CreateBudget : IEndpoint
         public Validator()
         {
             RuleFor(request => request.CategoryId)
-                .GreaterThan(0).WithMessage("The categoryId must reference an existing category.");
+                .GreaterThan(0).WithMessage("The category must be a valid selection.");
 
             RuleFor(request => request.Amount)
                 .NotNull().WithMessage("The amount is required.");
@@ -67,14 +62,14 @@ public sealed class CreateBudget : IEndpoint
 
             RuleFor(request => request.EndsOn)
                 .Must((request, endsOn) => endsOn is null || endsOn >= request.StartsOn)
-                .WithMessage("The endsOn date cannot be before startsOn.");
+                .WithMessage("The end date cannot be before the start date.");
 
             // Null is allowed and means this budget says nothing before its limit is passed. The
             // domain guards this too; this is here so a bad value is a 400 rather than a 500.
             RuleFor(request => request.AlertThresholdPercent)
                 .InclusiveBetween(1, 100)
                 .When(request => request.AlertThresholdPercent is not null)
-                .WithMessage("The alertThresholdPercent must be between 1 and 100.");
+                .WithMessage("The alert threshold must be between 1 and 100 percent.");
         }
 
         private static bool IsOneOff(string recurrence) =>
@@ -86,13 +81,13 @@ public sealed class CreateBudget : IEndpoint
 
     private static async Task<Created<BudgetResponse>> Handle(
         Request request,
-        XpenseDbContext db,
-        HttpContext http,
-        CancellationToken ct)
+        XpenseDbContext dbContext,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
     {
-        var category = await db.Categories
+        var category = await dbContext.Categories
             .Include(item => item.Priority)
-            .FirstOrDefaultAsync(item => item.Id == request.CategoryId, ct)
+            .FirstOrDefaultAsync(item => item.Id == request.CategoryId, cancellationToken)
             ?? throw new CategoryNotFoundException(request.CategoryId);
 
         CurrencyParser.TryParse(request.Amount.Currency, out var currency);
@@ -106,15 +101,15 @@ public sealed class CreateBudget : IEndpoint
             request.EndsOn?.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),
             request.AlertThresholdPercent);
 
-        db.Budgets.Add(budget);
+        dbContext.Budgets.Add(budget);
 
-        if (await db.SaveChangesAsync(ct) < 1)
+        if (await dbContext.SaveChangesAsync(cancellationToken) < 1)
             throw new BudgetCreationFailedException(request.CategoryId);
 
         // A freshly stated budget has measured nothing worth reporting yet, and the caller asked to
         // create rather than to read, so no period is computed here.
         return TypedResults.Created(
-            http.ResourceUri($"/api/v1/budgets/{budget.Id}"),
+            httpContext.ResourceUri($"/api/v1/budgets/{budget.Id}"),
             BudgetResponse.Of(budget, null));
     }
 }

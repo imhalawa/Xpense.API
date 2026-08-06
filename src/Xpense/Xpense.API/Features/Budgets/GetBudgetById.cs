@@ -14,14 +14,6 @@ using Xpense.Persistence;
 
 namespace Xpense.API.Features.Budgets;
 
-/// <summary>
-/// One budget and what it has measured over one of its periods.
-/// <para>
-/// Unlike <see cref="ListBudgets"/>, the totals are summed in the database and grouped by currency
-/// there: with a single budget there is one window to ask about, so nothing has to be sorted out in
-/// memory afterwards.
-/// </para>
-/// </summary>
 public sealed class GetBudgetById : IEndpoint
 {
     public static void Map(IEndpointRouteBuilder app) =>
@@ -29,17 +21,17 @@ public sealed class GetBudgetById : IEndpoint
 
     private static async Task<Ok<BudgetResponse>> Handle(
         int id,
-        XpenseDbContext db,
-        CancellationToken ct,
+        XpenseDbContext dbContext,
+        CancellationToken cancellationToken,
         DateTimeOffset? on = null)
     {
         var instant = on?.UtcDateTime ?? DateTime.UtcNow;
 
-        var budget = await db.Budgets
+        var budget = await dbContext.Budgets
             .AsNoTracking()
             .Include(item => item.Category)
             .ThenInclude(category => category!.Priority)
-            .FirstOrDefaultAsync(item => item.Id == id, ct)
+            .FirstOrDefaultAsync(item => item.Id == id, cancellationToken)
             ?? throw new BudgetNotFoundException(id);
 
         var period = budget.PeriodOn(instant);
@@ -47,7 +39,7 @@ public sealed class GetBudgetById : IEndpoint
         if (period is null)
             return TypedResults.Ok(BudgetResponse.Of(budget, null));
 
-        var totals = await db.Transactions
+        var totals = await dbContext.Transactions
             .AsNoTracking()
             .Where(transaction => transaction.SourceAccountId != null
                                   && transaction.DestinationAccountId == null
@@ -60,7 +52,7 @@ public sealed class GetBudgetById : IEndpoint
                 Currency = group.Key,
                 MinorUnits = group.Sum(transaction => transaction.AmountMinorUnits)
             })
-            .ToListAsync(ct);
+            .ToListAsync(cancellationToken);
 
         // Built in the budget's own currency: Money.Zero is EUR, and a EUR zero taken from a USD
         // limit throws instead of returning the limit untouched.

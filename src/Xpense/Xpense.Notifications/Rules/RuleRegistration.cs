@@ -4,15 +4,6 @@ namespace Xpense.Notifications.Rules;
 
 public static class RuleRegistration
 {
-    /// <summary>
-    /// Finds every rule in this assembly and registers it, plus a dispatcher for each body type any
-    /// rule cares about.
-    /// <para>
-    /// A scan rather than a list, for the reason <c>MapEndpoints</c> scans for slices: a registration
-    /// list is a second place to remember, and the failure when you forget is a rule that silently
-    /// never runs.
-    /// </para>
-    /// </summary>
     public static IServiceCollection AddNotificationRules(this IServiceCollection services)
     {
         var ruleInterface = typeof(INotificationRule<>);

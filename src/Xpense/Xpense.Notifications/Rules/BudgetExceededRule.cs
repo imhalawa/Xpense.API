@@ -7,24 +7,11 @@ using Xpense.Persistence;
 
 namespace Xpense.Notifications.Rules;
 
-/// <summary>
-/// Says something the first time spending passes a budget's limit in a period.
-/// <para>
-/// Fires on the crossing, not on the state. The event carries the amount, so the totals both before
-/// and after this expense are known, and the rule fires only when the limit sits between them --
-/// which means it says this once per period however many further expenses land. Spending more while
-/// already over is a different thing that happened, and a different rule's business.
-/// </para>
-/// <para>
-/// Knows nothing about any other rule and shares no query with one. That is deliberate: see
-/// <see cref="INotificationRule{TBody}"/>.
-/// </para>
-/// </summary>
-public sealed class BudgetExceededRule(XpenseDbContext db) : INotificationRule<TransactionRecorded>
+public sealed class BudgetExceededRule(XpenseDbContext dbContext) : INotificationRule<TransactionRecorded>
 {
     public async Task<IReadOnlyList<NotificationDraft>> Evaluate(
         Event<TransactionRecorded> @event,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var body = @event.Body;
 
@@ -34,11 +21,11 @@ public sealed class BudgetExceededRule(XpenseDbContext db) : INotificationRule<T
         if (body.Kind != TransactionKind.Expense || body.CategoryId is null)
             return [];
 
-        var budgets = await db.Budgets
+        var budgets = await dbContext.Budgets
             .AsNoTracking()
             .Include(budget => budget.Category)
             .Where(budget => budget.CategoryId == body.CategoryId && budget.Currency == body.Currency)
-            .ToListAsync(ct);
+            .ToListAsync(cancellationToken);
 
         if (budgets.Count == 0)
             return [];
@@ -55,7 +42,7 @@ public sealed class BudgetExceededRule(XpenseDbContext db) : INotificationRule<T
             if (period is null)
                 continue;
 
-            var after = await SpentIn(budget, period, ct);
+            var after = await SpentIn(budget, period, cancellationToken);
             var before = after - Money.OfMinorUnits(body.AmountMinorUnits, budget.Currency);
 
             // The crossing: at or under the limit before, over it after. A single expense that lands
@@ -69,13 +56,9 @@ public sealed class BudgetExceededRule(XpenseDbContext db) : INotificationRule<T
         return drafts;
     }
 
-    /// <summary>
-    /// Everything spent in this budget's category and currency during the period, including the
-    /// expense that prompted this -- it is committed by the time the event is processed.
-    /// </summary>
-    private async Task<Money> SpentIn(Budget budget, BudgetPeriod period, CancellationToken ct)
+    private async Task<Money> SpentIn(Budget budget, BudgetPeriod period, CancellationToken cancellationToken)
     {
-        var minorUnits = await db.Transactions
+        var minorUnits = await dbContext.Transactions
             .AsNoTracking()
             .Where(transaction => transaction.SourceAccountId != null
                                   && transaction.DestinationAccountId == null
@@ -83,7 +66,7 @@ public sealed class BudgetExceededRule(XpenseDbContext db) : INotificationRule<T
                                   && transaction.Currency == budget.Currency
                                   && transaction.OccurredAt >= period.From
                                   && transaction.OccurredAt < period.ToExclusive)
-            .SumAsync(transaction => transaction.AmountMinorUnits, ct);
+            .SumAsync(transaction => transaction.AmountMinorUnits, cancellationToken);
 
         return Money.OfMinorUnits(minorUnits, budget.Currency);
     }
@@ -109,14 +92,6 @@ public sealed class BudgetExceededRule(XpenseDbContext db) : INotificationRule<T
                 budget.Currency.ToString()));
     }
 
-    /// <summary>
-    /// The facts, for a client that wants to link to the budget or show its own wording. Declared
-    /// beside the rule that produces it, because nothing else has any business reading it.
-    /// <para>
-    /// Nothing time-varying in here: this is hashed to deduplicate, so a timestamp would make every
-    /// redelivery look like a new notification.
-    /// </para>
-    /// </summary>
     private sealed record BudgetExceededPayload(
         int BudgetId,
         int CategoryId,

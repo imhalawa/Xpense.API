@@ -9,17 +9,8 @@ using Xpense.Persistence;
 
 namespace Xpense.Notifications;
 
-/// <summary>
-/// Claims a batch of outstanding events, asks the rules what is worth telling anyone, and stores the
-/// answers. One batch per call, so what happens is separate from when it happens -- <see cref="EventPump"/>
-/// decides the latter, and a test can drive this directly rather than starting a background loop.
-/// <para>
-/// There is no broker: the Events table is the queue. See
-/// docs/adr/0008-the-events-table-is-the-queue.md.
-/// </para>
-/// </summary>
 public sealed class EventProcessor(
-    XpenseDbContext db,
+    XpenseDbContext dbContext,
     IEnumerable<IEventDispatcher> dispatchers,
     ILogger<EventProcessor> logger)
 {
@@ -28,44 +19,28 @@ public sealed class EventProcessor(
     private readonly Dictionary<string, IEventDispatcher> dispatchers =
         dispatchers.ToDictionary(dispatcher => dispatcher.EventType);
 
-    /// <summary>
-    /// Processes up to <see cref="BatchSize"/> events and returns how many were claimed. A full batch
-    /// means there is probably more waiting.
-    /// </summary>
-    public async Task<int> ProcessBatch(CancellationToken ct = default)
+    public async Task<int> ProcessBatch(CancellationToken cancellationToken = default)
     {
         // One transaction around claim-and-process: the row locks below are held until it ends, and a
         // crash mid-batch rolls back so the events stay outstanding rather than half-handled.
-        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-        var claimed = await Claim(ct);
+        var claimed = await Claim(cancellationToken);
 
         if (claimed.Count == 0)
             return 0;
 
         foreach (var record in claimed)
-            await Process(record, ct);
+            await Process(record, cancellationToken);
 
-        await db.SaveChangesAsync(ct);
-        await transaction.CommitAsync(ct);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return claimed.Count;
     }
 
-    /// <summary>
-    /// Takes the oldest outstanding events, locking them so nothing else picks them up.
-    /// <para>
-    /// SKIP LOCKED rather than waiting: a second worker takes the next unlocked rows instead of
-    /// blocking on the first one's batch. Only one worker runs today, so this is insurance -- but it is
-    /// the difference between scaling out being configuration and being a rewrite.
-    /// </para>
-    /// <para>
-    /// Query filters are ignored so EF does not wrap this in a subquery, which would move the row lock
-    /// away from the rows being selected. The IsDeleted condition is therefore written by hand.
-    /// </para>
-    /// </summary>
-    private Task<List<EventRecord>> Claim(CancellationToken ct) =>
-        db.Events
+    private Task<List<EventRecord>> Claim(CancellationToken cancellationToken) =>
+        dbContext.Events
             .FromSql($"""
                       SELECT * FROM "Xpense"."Events"
                       WHERE "ProcessedAt" IS NULL AND "IsDeleted" = false
@@ -74,9 +49,9 @@ public sealed class EventProcessor(
                       FOR UPDATE SKIP LOCKED
                       """)
             .IgnoreQueryFilters()
-            .ToListAsync(ct);
+            .ToListAsync(cancellationToken);
 
-    private async Task Process(EventRecord record, CancellationToken ct)
+    private async Task Process(EventRecord record, CancellationToken cancellationToken)
     {
         if (!dispatchers.TryGetValue(record.Type, out var dispatcher))
         {
@@ -88,8 +63,8 @@ public sealed class EventProcessor(
 
         try
         {
-            var drafts = await dispatcher.Dispatch(record, ct);
-            var stored = await Store(record, drafts, ct);
+            var drafts = await dispatcher.Dispatch(record, cancellationToken);
+            var stored = await Store(record, drafts, cancellationToken);
 
             record.Succeeded();
 
@@ -118,7 +93,7 @@ public sealed class EventProcessor(
     private async Task<int> Store(
         EventRecord record,
         IReadOnlyList<NotificationDraft> drafts,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         if (drafts.Count == 0)
             return 0;
@@ -139,17 +114,17 @@ public sealed class EventProcessor(
 
         // The unique index is the real guarantee. This only avoids the exception in the ordinary case
         // where an event is redelivered after already being handled.
-        var known = await db.Notifications
+        var known = await dbContext.Notifications
             .Where(notification => notification.EventId == record.EventId
                                    && hashes.Contains(notification.PayloadHash))
             .Select(notification => notification.PayloadHash)
-            .ToListAsync(ct);
+            .ToListAsync(cancellationToken);
 
         var fresh = candidates.Where(candidate => !known.Contains(candidate.hash)).ToArray();
 
         foreach (var (draft, payload, hash) in fresh)
         {
-            db.Notifications.Add(new Notification
+            dbContext.Notifications.Add(new Notification
             {
                 EventId = record.EventId,
                 Kind = draft.Kind,
@@ -164,14 +139,9 @@ public sealed class EventProcessor(
         return fresh.Length;
     }
 
-    /// <summary>SHA-256 of the serialized facts, lower-case hex. 64 characters, always.</summary>
     private static string Hash(string payload) =>
         Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(payload)));
 
-    /// <summary>
-    /// The message plus the innermost cause, which is usually where the real reason is. Truncated
-    /// rather than letting the write that was recording a failure fail on column length.
-    /// </summary>
     private static string Describe(Exception exception)
     {
         var root = exception.GetBaseException();
@@ -182,10 +152,9 @@ public sealed class EventProcessor(
         return text.Length <= 2000 ? text : text[..2000];
     }
 
-    /// <summary>Detaches everything except the event rows, whose failure state must survive.</summary>
     private void Discard()
     {
-        foreach (var entry in db.ChangeTracker.Entries().ToArray())
+        foreach (var entry in dbContext.ChangeTracker.Entries().ToArray())
         {
             if (entry.Entity is not EventRecord)
                 entry.State = EntityState.Detached;

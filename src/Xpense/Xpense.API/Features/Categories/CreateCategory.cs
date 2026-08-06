@@ -28,7 +28,7 @@ public sealed class CreateCategory : IEndpoint
                 .MaximumLength(200);
 
             RuleFor(request => request.PriorityId)
-                .GreaterThan(0).WithMessage("The priorityId must reference an existing priority.");
+                .GreaterThan(0).WithMessage("The priority must be a valid selection.");
         }
     }
 
@@ -37,11 +37,11 @@ public sealed class CreateCategory : IEndpoint
 
     private static async Task<Created<CategoryResponse>> Handle(
         Request request,
-        XpenseDbContext db,
-        HttpContext http,
-        CancellationToken ct)
+        XpenseDbContext dbContext,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
     {
-        var priority = await db.Priorities.FirstOrDefaultAsync(p => p.Id == request.PriorityId, ct)
+        var priority = await dbContext.Priorities.FirstOrDefaultAsync(p => p.Id == request.PriorityId, cancellationToken)
                        ?? throw new PriorityNotFoundException(request.PriorityId);
 
         var category = new Category
@@ -51,13 +51,13 @@ public sealed class CreateCategory : IEndpoint
             CreatedAt = DateTime.UtcNow
         };
 
-        db.Categories.Add(category);
+        dbContext.Categories.Add(category);
 
-        if (await db.SaveChangesAsync(ct) < 1)
+        if (await dbContext.SaveChangesAsync(cancellationToken) < 1)
             throw new CategoryCreationFailedException(request.Label);
 
         return TypedResults.Created(
-            http.ResourceUri($"/api/v1/categories/{category.Id}"),
+            httpContext.ResourceUri($"/api/v1/categories/{category.Id}"),
             CategoryResponse.Of(category));
     }
 }

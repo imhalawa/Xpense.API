@@ -7,11 +7,11 @@ namespace Xpense.API.Features.Notifications;
 
 /// <summary>
 /// Shared by every notification slice: a notification looks the same however you fetched it.
+/// <para>
+/// <c>Payload</c> is JSON rather than a string. It is stored as jsonb and emitted inline, so a client
+/// reads an object -- serializing it as a quoted string would make every consumer parse it twice.
+/// </para>
 /// </summary>
-/// <param name="Payload">
-/// The facts, as JSON rather than a string. Stored as jsonb and emitted inline, so a client reads an
-/// object -- serializing it as a quoted string would make every consumer parse it twice.
-/// </param>
 public sealed record NotificationResponse(
     int Id,
     string Kind,
@@ -30,11 +30,6 @@ public sealed record NotificationResponse(
         Timestamps.Iso(notification.ReadAt),
         Timestamps.Iso(notification.CreatedAt));
 
-    /// <summary>
-    /// The column is jsonb, so this is valid JSON by construction. Anything unparseable would be a
-    /// corrupt row rather than a bad request, and letting it surface as a 500 is more honest than
-    /// returning null and hiding it.
-    /// </summary>
     private static JsonNode? Parse(string payload) => JsonNode.Parse(payload);
 }
 

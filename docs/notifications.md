@@ -35,10 +35,10 @@ Most events produce no notification at all.
 ## Emitting one
 
 ```csharp
-public sealed class CreateSomething(XpenseDbContext db, IEventBus events)
+public sealed class CreateSomething(XpenseDbContext dbContext, IEventBus events)
 {
-    await events.Emit(Event.Of(new SomethingHappened(id, amount)), ct);
-    await db.SaveChangesAsync(ct);   // the event becomes durable here, not before
+    await events.Emit(Event.Of(new SomethingHappened(id, amount)), cancellationToken);
+    await dbContext.SaveChangesAsync(cancellationToken);   // the event becomes durable here, not before
 }
 ```
 
@@ -58,11 +58,11 @@ One notification kind, one file, and no knowledge of any other rule. Rules are f
 assembly, so adding a file is the whole registration step.
 
 ```csharp
-public sealed class SomethingWorthSayingRule(XpenseDbContext db)
+public sealed class SomethingWorthSayingRule(XpenseDbContext dbContext)
     : INotificationRule<TransactionRecorded>
 {
     public async Task<IReadOnlyList<NotificationDraft>> Evaluate(
-        Event<TransactionRecorded> @event, CancellationToken ct)
+        Event<TransactionRecorded> @event, CancellationToken cancellationToken)
     {
         if (nothing worth saying) return [];
 

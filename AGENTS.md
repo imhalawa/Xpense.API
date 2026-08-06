@@ -57,6 +57,13 @@ These are enforced by `Xpense.Tests/Architecture/SliceIsolationTests.cs`. Breaki
 
 `GET /health` is the one deliberate exception: it is mapped directly in `Program.cs` because it is infrastructure, not a feature. It has no request, no contract to version and no slice to belong to. The architecture tests allow it — they constrain types under `Xpense.API.Features.*` and types implementing `IEndpoint`, and it is neither. Do not treat it as precedent for a second one.
 
+## Style
+
+- **Spell names out.** `cancellationToken`, not `ct`. `dbContext`, not `db`. `httpContext`, not `http`. The same goes for lambda parameters: `transaction => transaction.Id`, never `t => t.Id`. `app` in `Map(IEndpointRouteBuilder app)` is the one exception, because it is the framework's own name for that thing.
+- **Constants first.** `const` and `static readonly` go at the top of the type, before fields, properties and methods.
+- **XML comments only where Swagger reads them**, which is `<summary>` on `*Request` and `*Response` records. Nothing else in the solution has `///` — the generated document is the contract ([ADR 0003](docs/adr/0003-generated-openapi-is-the-contract.md)), and a `///` block that reaches no reader is noise. Use `//` for anything a reader of the code needs to know.
+- **Validation messages are prose, not identifiers.** "The alert threshold must be between 1 and 100 percent", never "alertThresholdPercent must be…". The error dictionary is already keyed by the camelCase field, so the message is free to read like a sentence. Domain words stay: "minor units" is the term, per `UBIQUITOUS_LANGUAGE.md`.
+
 ## Conventions
 
 - **Requests nest inside their slice** (`CreateTag.Request`), even when two look alike today. Responses are shared per feature or in `Contracts/`, because a resource should look the same however you fetched it.

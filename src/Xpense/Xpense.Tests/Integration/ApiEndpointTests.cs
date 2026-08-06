@@ -18,11 +18,6 @@ using Xpense.Tests.Infrastructure;
 
 namespace Xpense.Tests.Integration;
 
-/// <summary>
-/// The canonical HTTP contract suite. Every endpoint, every error shape, one file.
-/// Each test gets its own Postgres database, cloned from the migrated template that
-/// <see cref="PostgresFixture"/> builds once per run.
-/// </summary>
 [TestFixture]
 public class ApiEndpointTests
 {
@@ -272,11 +267,6 @@ public class ApiEndpointTests
         (await GetAccountBalance(seeded.AccountNumber)).Should().Be(1234);
     }
 
-    /// <summary>
-    /// OccurredAt and CreatedAt are separate facts. A transaction dated in the past keeps that date
-    /// while still recording when the row was written -- they were the same column until now, so a
-    /// backdated entry made it impossible to tell when anything was entered.
-    /// </summary>
     [Test]
     public async Task Post_transaction_keeps_the_supplied_occurrence_time_and_stamps_its_own_created_time()
     {
@@ -621,11 +611,11 @@ public class ApiEndpointTests
 
         using (var scope = failing.Services.CreateScope())
         {
-            var db = scope.ServiceProvider.GetRequiredService<XpenseDbContext>();
-            db.Accounts.AddRange(
+            var dbContext = scope.ServiceProvider.GetRequiredService<XpenseDbContext>();
+            dbContext.Accounts.AddRange(
                 NewAccount(SourceNumber, "Source", 2000),
                 NewAccount(DestinationNumber, "Destination", 300));
-            await db.SaveChangesAsync();
+            await dbContext.SaveChangesAsync();
         }
 
         var response = await failingClient.PostAsJsonAsync("/api/v1/transactions", new
@@ -757,10 +747,6 @@ public class ApiEndpointTests
         expenses[0].GetProperty("amount").GetProperty("minorUnits").GetInt64().Should().Be(1250);
     }
 
-    /// <summary>
-    /// Spending means expenses. Transfers have no category to group by, and income is not spending
-    /// -- nothing filtered by direction before, so both would have been counted.
-    /// </summary>
     [Test]
     public async Task Get_spending_by_category_counts_neither_income_nor_transfers()
     {
@@ -775,10 +761,6 @@ public class ApiEndpointTests
         totals[0].GetProperty("minorUnits").GetInt64().Should().Be(1250);
     }
 
-    /// <summary>
-    /// This used to label the whole day with the first expense's currency and add every minor unit
-    /// together, so 12.50 EUR and 7.00 USD reported as 19.50 EUR -- money created by addition.
-    /// </summary>
     [Test]
     public async Task Get_spending_by_category_never_sums_across_currencies()
     {
@@ -805,10 +787,6 @@ public class ApiEndpointTests
 
     // ---------------------------------------------------------------- priorities
 
-    /// <summary>
-    /// Also proves the SeedPriorities migration ran: these five rows come from the schema, not from
-    /// anything this test wrote.
-    /// </summary>
     [Test]
     public async Task Get_priorities_returns_the_reference_data_seeded_by_the_migration()
     {
@@ -840,10 +818,6 @@ public class ApiEndpointTests
         document.RootElement.GetProperty("startsOn").GetString().Should().Be(FirstOfThisMonth());
     }
 
-    /// <summary>
-    /// A budget that does not repeat has exactly one window, so it has to say where that window ends.
-    /// Guarded by the validator here and by Budget.For underneath it.
-    /// </summary>
     [Test]
     public async Task Post_budgets_rejects_a_one_off_with_no_end()
     {
@@ -887,10 +861,6 @@ public class ApiEndpointTests
         period.GetProperty("exceeded").GetBoolean().Should().BeTrue();
     }
 
-    /// <summary>
-    /// A budget counts one currency. Spending the same category in another is reported as uncounted
-    /// rather than converted or, worse, added in.
-    /// </summary>
     [Test]
     public async Task Get_budgets_reports_spending_in_other_currencies_as_uncounted()
     {
@@ -908,10 +878,6 @@ public class ApiEndpointTests
         uncounted[0].GetProperty("minorUnits").GetInt64().Should().Be(700);
     }
 
-    /// <summary>
-    /// Spending means expenses. A transfer has no category to count against, and income is not
-    /// spending -- the same rule the analytics slice follows.
-    /// </summary>
     [Test]
     public async Task Get_budgets_counts_neither_income_nor_transfers()
     {
@@ -925,10 +891,6 @@ public class ApiEndpointTests
             .GetProperty("minorUnits").GetInt64().Should().Be(1250);
     }
 
-    /// <summary>
-    /// Two budgets on one category are two intentions, and Xpense reports both without arbitrating.
-    /// See docs/adr/0007-budgets-are-independent-of-one-another.md.
-    /// </summary>
     [Test]
     public async Task Get_budgets_reports_every_budget_on_a_category_without_choosing_between_them()
     {
@@ -974,10 +936,6 @@ public class ApiEndpointTests
         document.RootElement.GetArrayLength().Should().Be(0);
     }
 
-    /// <summary>
-    /// A budget on a category nobody can see measures nothing anyone can ask about. Without this,
-    /// the global query filter hides the category and budget reads meet a null one.
-    /// </summary>
     [Test]
     public async Task Delete_categories_also_deletes_the_budgets_pointing_at_it()
     {
@@ -1004,11 +962,6 @@ public class ApiEndpointTests
 
     // ---------------------------------------------------------------- notifications
 
-    /// <summary>
-    /// The whole pipeline over HTTP: recording an expense writes an event in the same transaction, the
-    /// processor turns it into a notification, and the API serves it. This is the test that would have
-    /// caught the Events table landing in the wrong schema.
-    /// </summary>
     [Test]
     public async Task Recording_an_expense_that_exceeds_a_budget_produces_a_notification()
     {
@@ -1093,17 +1046,6 @@ public class ApiEndpointTests
         document.RootElement.GetProperty("readAt").GetString().Should().NotBeNullOrEmpty();
     }
 
-    /// <summary>
-    /// Marking twice must not move the timestamp: the first sighting is the one recorded, so a client
-    /// retrying a failed request cannot rewrite when you saw something.
-    /// <para>
-    /// The two responses must match exactly, character for character. That is a stronger claim than it
-    /// looks: the first returns the value still in memory while the second returns it read back from
-    /// Postgres, whose timestamptz keeps microseconds where a .NET DateTime counts 100-nanosecond
-    /// ticks. Notification.MarkAsRead drops that extra precision deliberately -- without it this
-    /// passes only when the last tick happens to be zero.
-    /// </para>
-    /// </summary>
     [Test]
     public async Task Patch_notification_read_is_idempotent()
     {
@@ -1239,10 +1181,6 @@ public class ApiEndpointTests
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
-    /// <summary>
-    /// The account number addresses an account; the database key does not. "1" matches the route
-    /// pattern but is nobody's account number, so it resolves to a 404 rather than to account 1.
-    /// </summary>
     [TestCase("/api/account")]
     [TestCase("/api/account/1000000000")]
     [TestCase("/api/v1/accounts/1")]
@@ -1281,10 +1219,6 @@ public class ApiEndpointTests
     private static StringContent NewTagBody(string label) =>
         JsonBody($"{{\"label\":\"{label}\",\"bgColorHex\":\"#ffffff\",\"fgColorHex\":\"#000000\"}}");
 
-    /// <summary>
-    /// Starts on the first of the current month so the budget is measuring today whatever day the
-    /// suite runs. A "None" recurrence deliberately gets no endsOn, which is what makes it invalid.
-    /// </summary>
     private static StringContent NewBudgetBody(int categoryId, long minorUnits, string recurrence) =>
         JsonBody(
             $"{{\"categoryId\":{categoryId},\"amount\":{{\"minorUnits\":{minorUnits},\"currency\":\"EUR\"}},"
@@ -1296,10 +1230,6 @@ public class ApiEndpointTests
         return new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc).ToString("yyyy-MM-dd");
     }
 
-    /// <summary>
-    /// The ISO week year is not always the calendar year -- 2027-01-01 sits in week 53 of 2026 -- so
-    /// the expected name is built the same way the domain builds it.
-    /// </summary>
     private static string IsoWeekName(DateTime instant) =>
         $"{System.Globalization.ISOWeek.GetYear(instant):0000}-W{System.Globalization.ISOWeek.GetWeekOfYear(instant):00}";
 
@@ -1356,10 +1286,6 @@ public class ApiEndpointTests
         }
     }
 
-    /// <summary>
-    /// One row per collection resource, so the collection assertions are real. Previously only
-    /// an account was seeded and the category/tag/merchant cases passed against an empty array.
-    /// </summary>
     private async Task SeedOneOfEachResource()
     {
         var dbContext = NewDbContext(out var scope);
@@ -1415,28 +1341,19 @@ public class ApiEndpointTests
         static DateTimeOffset At(int hour) => new(2026, 7, 26, hour, 0, 0, TimeSpan.Zero);
     }
 
-    /// <summary>
-    /// Runs the worker's work inside the test host, using the host's own service provider so the rules
-    /// are the registered ones. Explicit rather than waiting on a background loop: a test that sleeps
-    /// hoping something happened is a test that fails on a slow machine.
-    /// </summary>
     private async Task ProcessEvents()
     {
         using var scope = factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<XpenseDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<XpenseDbContext>();
 
         IEventDispatcher dispatcher = new EventDispatcher<TransactionRecorded>(
-            [new BudgetExceededRule(db)]);
+            [new BudgetExceededRule(dbContext)]);
 
-        var processor = new EventProcessor(db, [dispatcher], NullLogger<EventProcessor>.Instance);
+        var processor = new EventProcessor(dbContext, [dispatcher], NullLogger<EventProcessor>.Instance);
 
         await processor.ProcessBatch();
     }
 
-    /// <summary>
-    /// Writes notifications directly. They are the worker's output, so building them here keeps the
-    /// retrieval tests about retrieval rather than about how a rule reached a verdict.
-    /// </summary>
     private async Task SeedNotifications(int unread, int read)
     {
         var dbContext = NewDbContext(out var scope);
@@ -1475,10 +1392,6 @@ public class ApiEndpointTests
         }
     }
 
-    /// <summary>
-    /// One monthly EUR budget on Food, plus today's spending against it. Optionally spends the same
-    /// category in USD, and optionally adds income and a transfer that must not be counted.
-    /// </summary>
     private async Task SeedBudgetWithTodaysExpense(
         long limitMinorUnits,
         long spentMinorUnits,
@@ -1529,7 +1442,6 @@ public class ApiEndpointTests
         }
     }
 
-    /// <summary>Same category, same day, two currencies -- the case that used to be added together.</summary>
     private async Task SeedTodayExpensesInTwoCurrencies()
     {
         var dbContext = NewDbContext(out var scope);

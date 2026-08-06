@@ -26,7 +26,7 @@ public sealed class UpdateCategory : IEndpoint
                 .MaximumLength(200);
 
             RuleFor(request => request.PriorityId)
-                .GreaterThan(0).WithMessage("The priorityId must reference an existing priority.");
+                .GreaterThan(0).WithMessage("The priority must be a valid selection.");
         }
     }
 
@@ -36,20 +36,20 @@ public sealed class UpdateCategory : IEndpoint
     private static async Task<Ok<CategoryResponse>> Handle(
         int id,
         Request request,
-        XpenseDbContext db,
-        CancellationToken ct)
+        XpenseDbContext dbContext,
+        CancellationToken cancellationToken)
     {
-        var priority = await db.Priorities.FirstOrDefaultAsync(p => p.Id == request.PriorityId, ct)
+        var priority = await dbContext.Priorities.FirstOrDefaultAsync(p => p.Id == request.PriorityId, cancellationToken)
                        ?? throw new PriorityNotFoundException(request.PriorityId);
 
-        var category = await db.Categories.FirstOrDefaultAsync(item => item.Id == id, ct)
+        var category = await dbContext.Categories.FirstOrDefaultAsync(item => item.Id == id, cancellationToken)
                        ?? throw new CategoryNotFoundException(id);
 
         category.Label = request.Label;
         category.Priority = priority;
         category.Touch();
 
-        if (await db.SaveChangesAsync(ct) < 1)
+        if (await dbContext.SaveChangesAsync(cancellationToken) < 1)
             throw new CategoryUpdateFailedException(id);
 
         return TypedResults.Ok(CategoryResponse.Of(category));

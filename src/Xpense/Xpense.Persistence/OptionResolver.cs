@@ -4,59 +4,49 @@ using Xpense.Domain.Options;
 
 namespace Xpense.Persistence;
 
-/// <summary>
-/// Resolves a client-supplied merchant or tag to a persisted entity: match by id, fall back to
-/// label, undelete a soft-deleted row, or create when the caller asked for it.
-/// <para>
-/// This survived the move to vertical slices as a shared service rather than being inlined,
-/// because the rules are subtle, two features depend on them, and getting them wrong silently
-/// duplicates merchants. It used to be OptionRepository&lt;T&gt;.GetOrCreateIfMissing.
-/// </para>
-/// </summary>
-public sealed class OptionResolver<TEntity>(XpenseDbContext db)
+public sealed class OptionResolver<TEntity>(XpenseDbContext dbContext)
     where TEntity : BaseEntity, IOptionEntity
 {
-    private DbSet<TEntity> Set => db.Set<TEntity>();
+    private DbSet<TEntity> Set => dbContext.Set<TEntity>();
 
-    public async Task<TEntity?> Resolve<TModel>(TModel model, CancellationToken ct = default)
+    public async Task<TEntity?> Resolve<TModel>(TModel model, CancellationToken cancellationToken = default)
         where TModel : IOption<TEntity>
     {
         // Nothing to look up and no permission to create.
         if (!model.Create && !model.Id.HasValue)
             return null;
 
-        if (await FindLive(model, ct) is { } live)
+        if (await FindLive(model, cancellationToken) is { } live)
             return live;
 
-        if (await Restore(model, ct) is { } restored)
+        if (await Restore(model, cancellationToken) is { } restored)
             return restored;
 
         return model.Create ? model.ToEntity() : null;
     }
 
-    private async Task<TEntity?> FindLive<TModel>(TModel model, CancellationToken ct)
+    private async Task<TEntity?> FindLive<TModel>(TModel model, CancellationToken cancellationToken)
         where TModel : IOption<TEntity>
     {
         if (model.Id.HasValue &&
-            await Set.FirstOrDefaultAsync(entity => entity.Id == model.Id.Value, ct) is { } byId)
+            await Set.FirstOrDefaultAsync(entity => entity.Id == model.Id.Value, cancellationToken) is { } byId)
             return byId;
 
         if (!string.IsNullOrWhiteSpace(model.Label) &&
-            await Set.FirstOrDefaultAsync(entity => entity.Label == model.Label, ct) is { } byLabel)
+            await Set.FirstOrDefaultAsync(entity => entity.Label == model.Label, cancellationToken) is { } byLabel)
             return byLabel;
 
         return null;
     }
 
-    /// <summary>Soft-deleted rows are hidden by the global filter, so look past it and undelete.</summary>
-    private async Task<TEntity?> Restore<TModel>(TModel model, CancellationToken ct)
+    private async Task<TEntity?> Restore<TModel>(TModel model, CancellationToken cancellationToken)
         where TModel : IOption<TEntity>
     {
         var query = Set.IgnoreQueryFilters();
 
         var deleted = model.Id.HasValue
-            ? await query.FirstOrDefaultAsync(entity => entity.Id == model.Id.Value, ct)
-            : await query.FirstOrDefaultAsync(entity => entity.Label == model.Label, ct);
+            ? await query.FirstOrDefaultAsync(entity => entity.Id == model.Id.Value, cancellationToken)
+            : await query.FirstOrDefaultAsync(entity => entity.Label == model.Label, cancellationToken);
 
         if (deleted is not { IsDeleted: true })
             return null;

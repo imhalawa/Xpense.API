@@ -20,16 +20,6 @@ using Xpense.Domain.ValueObjects;
 
 namespace Xpense.API.Features.Transactions;
 
-/// <summary>
-/// One endpoint for all three kinds. Which sides the caller names decides the kind, so there is no
-/// type field to contradict them: naming only a destination is income, only a source is expense,
-/// both is a transfer. This replaced a separate /transfers resource over the same entity.
-/// <para>
-/// The caller must name at least one account. The default-account fallback that the old
-/// income/expense endpoint had is gone: it relied on a type field to know which side the default
-/// account stood in for, and that field no longer exists.
-/// </para>
-/// </summary>
 public sealed class CreateTransaction : IEndpoint
 {
     public sealed record Request(
@@ -66,7 +56,7 @@ public sealed class CreateTransaction : IEndpoint
             RuleFor(request => request)
                 .Must(request => Names(request.SourceAccountNumber) || Names(request.DestinationAccountNumber))
                 .WithMessage(
-                    "At least one of sourceAccountNumber and destinationAccountNumber is required.")
+                    "Either a source account or a destination account is required.")
                 .WithName(nameof(Request.SourceAccountNumber));
 
             // A transaction with one account inside Xpense has a counterparty outside it, which the
@@ -74,8 +64,8 @@ public sealed class CreateTransaction : IEndpoint
             When(IsOneSided, () =>
             {
                 RuleFor(request => request.CategoryId)
-                    .NotNull().WithMessage("The categoryId is required unless both accounts are named.")
-                    .GreaterThan(0).WithMessage("The categoryId must reference an existing category.");
+                    .NotNull().WithMessage("A category is required unless both accounts are named.")
+                    .GreaterThan(0).WithMessage("The category must be a valid selection.");
 
                 RuleFor(request => request.Merchant)
                     .NotNull().WithMessage("The merchant is required unless both accounts are named.");
@@ -113,12 +103,12 @@ public sealed class CreateTransaction : IEndpoint
 
     private static async Task<Created<TransactionResponse>> Handle(
         Request request,
-        XpenseDbContext db,
+        XpenseDbContext dbContext,
         OptionResolver<Merchant> merchants,
         OptionResolver<Tag> tags,
         IEventBus events,
-        HttpContext http,
-        CancellationToken ct)
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
     {
         // The validator already rejected anything else.
         CurrencyParser.TryParse(request.Amount.Currency, out var currency);
@@ -129,7 +119,7 @@ public sealed class CreateTransaction : IEndpoint
         // Serializable because every kind reads a balance and writes it back. The old transfer
         // endpoint isolated this and the old income/expense endpoint did not; one path means one
         // answer, and the safer one is the correct one.
-        await using var scope = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        await using var scope = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
 
         try
         {
@@ -137,44 +127,39 @@ public sealed class CreateTransaction : IEndpoint
             // reads made within the transaction, so a balance read outside it leaves the
             // insufficient-funds guard unprotected: two concurrent transfers from one account would
             // both see the old balance, both pass the check, and both commit.
-            var source = await FindAccount(db, request.SourceAccountNumber, ct);
-            var destination = await FindAccount(db, request.DestinationAccountNumber, ct);
-            var resolvedTags = await ResolveTags(tags, request.Tags, ct);
+            var source = await FindAccount(dbContext, request.SourceAccountNumber, cancellationToken);
+            var destination = await FindAccount(dbContext, request.DestinationAccountNumber, cancellationToken);
+            var resolvedTags = await ResolveTags(tags, request.Tags, cancellationToken);
 
             var transaction = source is not null && destination is not null
                 ? Domain.Entities.Transaction.Transfer(source, destination, amount, request.Reason, resolvedTags, occurredAt)
-                : await OneSided(db, merchants, request, source, destination, amount, resolvedTags, occurredAt, ct);
+                : await OneSided(dbContext, merchants, request, source, destination, amount, resolvedTags, occurredAt, cancellationToken);
 
-            db.Transactions.Add(transaction);
+            dbContext.Transactions.Add(transaction);
 
-            if (await db.SaveChangesAsync(ct) < 1)
+            if (await dbContext.SaveChangesAsync(cancellationToken) < 1)
                 throw Failure(request, amount, transaction.Kind);
 
             // Emitted after the save because the event names the transaction's id, and saved again
             // inside the same transaction so the fact and the record of it commit together. Nothing
             // here knows or cares whether anyone is listening -- see
             // docs/adr/0006-a-budget-reports-and-never-blocks.md.
-            await events.Emit(Event.Of(Recorded(transaction), occurredAt), ct);
-            await db.SaveChangesAsync(ct);
+            await events.Emit(Event.Of(Recorded(transaction), occurredAt), cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
 
-            await scope.CommitAsync(ct);
+            await scope.CommitAsync(cancellationToken);
 
             return TypedResults.Created(
-                http.ResourceUri($"/api/v1/transactions/{transaction.Id}"),
+                httpContext.ResourceUri($"/api/v1/transactions/{transaction.Id}"),
                 TransactionResponse.Of(transaction));
         }
         catch
         {
-            await scope.RollbackAsync(ct);
+            await scope.RollbackAsync(cancellationToken);
             throw;
         }
     }
 
-    /// <summary>
-    /// The transaction as a fact on the wire. Balances are the ones this movement produced, read off
-    /// the entities the factories already updated, because that is what was true when it happened --
-    /// a consumer reading the account later would see whatever is true then instead.
-    /// </summary>
     private static TransactionRecorded Recorded(Transaction transaction) =>
         new(
             transaction.Id,
@@ -190,7 +175,7 @@ public sealed class CreateTransaction : IEndpoint
             transaction.DestinationAccount?.BalanceMinorUnits);
 
     private static async Task<Transaction> OneSided(
-        XpenseDbContext db,
+        XpenseDbContext dbContext,
         OptionResolver<Merchant> merchants,
         Request request,
         Account? source,
@@ -198,14 +183,14 @@ public sealed class CreateTransaction : IEndpoint
         Money amount,
         List<Tag>? tags,
         DateTime occurredAt,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        var category = await db.Categories
+        var category = await dbContext.Categories
             .Include(item => item.Priority)
-            .FirstOrDefaultAsync(item => item.Id == request.CategoryId, ct)
+            .FirstOrDefaultAsync(item => item.Id == request.CategoryId, cancellationToken)
             ?? throw new CategoryNotFoundException(request.CategoryId!.Value);
 
-        var merchant = await merchants.Resolve(ToMerchantOption(request.Merchant!), ct)
+        var merchant = await merchants.Resolve(ToMerchantOption(request.Merchant!), cancellationToken)
                        ?? throw new MerchantNotFoundException(request.Merchant!.Label);
 
         // Deposit and Withdraw reject an amount whose currency differs from the account's, so a USD
@@ -215,29 +200,24 @@ public sealed class CreateTransaction : IEndpoint
             : Domain.Entities.Transaction.Expense(source!, amount, category, merchant, tags, occurredAt);
     }
 
-    /// <summary>
-    /// Defensive: adding an entity and saving returns at least one write or throws. Reported against
-    /// the side the money was heading for, so a transfer names its destination rather than being
-    /// mislabelled as a plain deposit.
-    /// </summary>
     private static Exception Failure(Request request, Money amount, TransactionKind kind) =>
         kind == TransactionKind.Expense
             ? new WithdrawCreationFailedException(amount.ToDecimal(), request.SourceAccountNumber!)
             : new DepositCreationFailedException(amount.ToDecimal(), request.DestinationAccountNumber!);
 
-    private static async Task<Account?> FindAccount(XpenseDbContext db, string? accountNumber, CancellationToken ct)
+    private static async Task<Account?> FindAccount(XpenseDbContext dbContext, string? accountNumber, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(accountNumber))
             return null;
 
-        return await db.Accounts.FirstOrDefaultAsync(account => account.AccountNumber == accountNumber, ct)
+        return await dbContext.Accounts.FirstOrDefaultAsync(account => account.AccountNumber == accountNumber, cancellationToken)
                ?? throw new AccountNotFoundException(accountNumber);
     }
 
     private static async Task<List<Tag>?> ResolveTags(
         OptionResolver<Tag> resolver,
         IReadOnlyList<OptionRequest>? requested,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         if (requested is null)
             return null;
@@ -245,7 +225,7 @@ public sealed class CreateTransaction : IEndpoint
         List<Tag> resolved = [];
         foreach (var option in requested)
         {
-            if (await resolver.Resolve(ToTagOption(option), ct) is { } tag)
+            if (await resolver.Resolve(ToTagOption(option), cancellationToken) is { } tag)
                 resolved.Add(tag);
         }
 

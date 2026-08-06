@@ -15,35 +15,26 @@ using Xpense.Persistence;
 
 namespace Xpense.API.Features.Budgets;
 
-/// <summary>
-/// Every budget with what it has measured so far, ready for a dashboard in one request.
-/// <para>
-/// Spending is fetched with a single query covering every budget in the list rather than one query
-/// per budget, so ten budgets cost two round trips and not eleven. The window asked for spans the
-/// earliest period start to the latest period end, which over-fetches when a weekly budget and a
-/// yearly one appear together -- one wide filtered read beats N narrow ones.
-/// </para>
-/// </summary>
 public sealed class ListBudgets : IEndpoint
 {
     public static void Map(IEndpointRouteBuilder app) =>
         app.MapGet("/api/v1/budgets", Handle).WithName(nameof(ListBudgets));
 
     private static async Task<Ok<BudgetResponse[]>> Handle(
-        XpenseDbContext db,
-        CancellationToken ct,
+        XpenseDbContext dbContext,
+        CancellationToken cancellationToken,
         DateTimeOffset? on = null)
     {
         // Which period a budget is in depends on a moment. Default to now; `?on=` asks about another.
         var instant = on?.UtcDateTime ?? DateTime.UtcNow;
 
-        var budgets = await db.Budgets
+        var budgets = await dbContext.Budgets
             .AsNoTracking()
             .Include(budget => budget.Category)
             .ThenInclude(category => category!.Priority)
             .OrderBy(budget => budget.CategoryId)
             .ThenBy(budget => budget.Id)
-            .ToListAsync(ct);
+            .ToListAsync(cancellationToken);
 
         var measured = budgets
             .Select(budget => (Budget: budget, Period: budget.PeriodOn(instant)))
@@ -60,7 +51,7 @@ public sealed class ListBudgets : IEndpoint
 
         // Expenses only, and the filter is written as columns because Kind is computed. A transfer
         // has no category to count against, and income is not spending.
-        var expenses = await db.Transactions
+        var expenses = await dbContext.Transactions
             .AsNoTracking()
             .Where(transaction => transaction.SourceAccountId != null
                                   && transaction.DestinationAccountId == null
@@ -73,7 +64,7 @@ public sealed class ListBudgets : IEndpoint
                 transaction.Currency,
                 transaction.OccurredAt,
                 transaction.AmountMinorUnits))
-            .ToListAsync(ct);
+            .ToListAsync(cancellationToken);
 
         var responses = measured
             .Select(entry => entry.Period is null
