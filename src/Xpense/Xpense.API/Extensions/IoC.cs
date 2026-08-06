@@ -8,6 +8,7 @@ using System.IO;
 using System.Reflection;
 using Xpense.API.ExceptionHandlers;
 using Xpense.API.Infrastructure;
+using Xpense.Domain.Events;
 using Xpense.Persistence;
 
 namespace Xpense.API.Extensions;
@@ -31,6 +32,11 @@ public static class IoC
     public static void AddDomainServices(this IServiceCollection services)
     {
         services.AddScoped(typeof(OptionResolver<>));
+
+        // Emitting an event is inserting a row through the caller's DbContext, so this is scoped like
+        // the context it writes to. Nothing here connects to a broker, because there is not one --
+        // see docs/adr/0008-the-events-table-is-the-queue.md.
+        services.AddScoped<IEventBus, EventBus>();
     }
 
     /// <summary>

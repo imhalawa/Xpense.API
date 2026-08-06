@@ -3,8 +3,9 @@
 # Applies migrations and exits. Runs as its own deployment step so no application instance ever
 # migrates itself -- see docs/adr/0004-migrations-are-a-deployment-step.md.
 #
-# The stanza up to `dotnet restore` is byte-identical to docker/api/Dockerfile on purpose; see the
-# note there about the shared BuildKit cache.
+# The stanza up to `dotnet restore` is byte-identical to docker/api/Dockerfile and
+# docker/notifications/Dockerfile on purpose; see the note in the api one about the shared BuildKit
+# cache and why every project's csproj has to be copied.
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
@@ -12,6 +13,7 @@ COPY src/Xpense/Xpense.sln ./
 COPY src/Xpense/Xpense.Domain/Xpense.Domain.csproj Xpense.Domain/
 COPY src/Xpense/Xpense.Persistence/Xpense.Persistence.csproj Xpense.Persistence/
 COPY src/Xpense/Xpense.API/Xpense.API.csproj Xpense.API/
+COPY src/Xpense/Xpense.Notifications/Xpense.Notifications.csproj Xpense.Notifications/
 COPY src/Xpense/Xpense.Tests/Xpense.Tests.csproj Xpense.Tests/
 RUN dotnet restore Xpense.sln
 

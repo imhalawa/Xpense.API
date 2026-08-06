@@ -13,6 +13,7 @@ using Xpense.API.Infrastructure;
 using Xpense.Persistence;
 using Xpense.Domain.Entities;
 using Xpense.Domain.Enums;
+using Xpense.Domain.Events;
 using Xpense.Domain.Exceptions;
 using Xpense.Domain.Options;
 using Xpense.Domain.ValueObjects;
@@ -115,6 +116,7 @@ public sealed class CreateTransaction : IEndpoint
         XpenseDbContext db,
         OptionResolver<Merchant> merchants,
         OptionResolver<Tag> tags,
+        IEventBus events,
         HttpContext http,
         CancellationToken ct)
     {
@@ -148,6 +150,13 @@ public sealed class CreateTransaction : IEndpoint
             if (await db.SaveChangesAsync(ct) < 1)
                 throw Failure(request, amount, transaction.Kind);
 
+            // Emitted after the save because the event names the transaction's id, and saved again
+            // inside the same transaction so the fact and the record of it commit together. Nothing
+            // here knows or cares whether anyone is listening -- see
+            // docs/adr/0006-a-budget-reports-and-never-blocks.md.
+            await events.Emit(Event.Of(Recorded(transaction), occurredAt), ct);
+            await db.SaveChangesAsync(ct);
+
             await scope.CommitAsync(ct);
 
             return TypedResults.Created(
@@ -160,6 +169,25 @@ public sealed class CreateTransaction : IEndpoint
             throw;
         }
     }
+
+    /// <summary>
+    /// The transaction as a fact on the wire. Balances are the ones this movement produced, read off
+    /// the entities the factories already updated, because that is what was true when it happened --
+    /// a consumer reading the account later would see whatever is true then instead.
+    /// </summary>
+    private static TransactionRecorded Recorded(Transaction transaction) =>
+        new(
+            transaction.Id,
+            transaction.Kind,
+            transaction.AmountMinorUnits,
+            transaction.Currency,
+            transaction.OccurredAt,
+            transaction.CategoryId,
+            transaction.MerchantId,
+            transaction.SourceAccount?.AccountNumber,
+            transaction.SourceAccount?.BalanceMinorUnits,
+            transaction.DestinationAccount?.AccountNumber,
+            transaction.DestinationAccount?.BalanceMinorUnits);
 
     private static async Task<Transaction> OneSided(
         XpenseDbContext db,

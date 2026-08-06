@@ -54,6 +54,27 @@ public class Budget : BaseEntity
     /// </summary>
     public DateTime? EndsOn { get; set; }
 
+    /// <summary>
+    /// The share of <see cref="Amount"/> at which it is worth saying something, before the limit
+    /// itself is reached. Null means say nothing early. Defaults to <see cref="DefaultAlertThreshold"/>.
+    /// </summary>
+    public int? AlertThresholdPercent { get; set; }
+
+    /// <summary>Three quarters: late enough to be worth hearing, early enough to act on.</summary>
+    public const int DefaultAlertThreshold = 75;
+
+    /// <summary>
+    /// The amount at which this budget's alert threshold is reached, or null when it has none.
+    /// <para>
+    /// Rounded down, so the threshold is crossed at the first minor unit that genuinely reaches the
+    /// share rather than a fraction before it.
+    /// </para>
+    /// </summary>
+    public Money? AlertThreshold =>
+        AlertThresholdPercent is null
+            ? null
+            : Money.OfMinorUnits(AmountMinorUnits * AlertThresholdPercent.Value / 100, Currency);
+
     /// <summary>The first instant after this budget's life. Open-ended budgets never reach it.</summary>
     private DateTime LifeToExclusive => EndsOn?.AddDays(1) ?? DateTime.MaxValue;
 
@@ -62,7 +83,8 @@ public class Budget : BaseEntity
         Money amount,
         Recurrence recurrence,
         DateTime startsOn,
-        DateTime? endsOn)
+        DateTime? endsOn,
+        int? alertThresholdPercent = DefaultAlertThreshold)
     {
         if (amount.MinorUnits <= 0)
             throw new InvalidBudgetException("A budget amount must be positive.");
@@ -77,6 +99,7 @@ public class Budget : BaseEntity
             Recurrence = recurrence,
             StartsOn = from,
             EndsOn = to,
+            AlertThresholdPercent = RequireValidThreshold(alertThresholdPercent),
             CreatedAt = DateTime.UtcNow
         };
     }
@@ -86,19 +109,42 @@ public class Budget : BaseEntity
     /// a different category is a different budget, the same way an account's currency is fixed for
     /// its life.
     /// </summary>
-    public void Restate(Money amount, Recurrence recurrence, DateTime startsOn, DateTime? endsOn)
+    public void Restate(
+        Money amount,
+        Recurrence recurrence,
+        DateTime startsOn,
+        DateTime? endsOn,
+        int? alertThresholdPercent = DefaultAlertThreshold)
     {
         if (amount.MinorUnits <= 0)
             throw new InvalidBudgetException("A budget amount must be positive.");
 
         var (from, to) = RequireValidWindow(recurrence, startsOn, endsOn);
+        var threshold = RequireValidThreshold(alertThresholdPercent);
 
         AmountMinorUnits = amount.MinorUnits;
         Currency = amount.Currency;
         Recurrence = recurrence;
         StartsOn = from;
         EndsOn = to;
+        AlertThresholdPercent = threshold;
         Touch();
+    }
+
+    /// <summary>
+    /// A threshold is a share of the limit, so it lies between 1 and 100. Null is allowed and means
+    /// this budget says nothing before the limit is passed.
+    /// <para>
+    /// 100 is permitted and is not the same as saying nothing: it fires on reaching the limit exactly,
+    /// where "exceeded" needs the limit passed.
+    /// </para>
+    /// </summary>
+    private static int? RequireValidThreshold(int? percent)
+    {
+        if (percent is not null && percent is < 1 or > 100)
+            throw new InvalidBudgetException("An alert threshold must be between 1 and 100 percent.");
+
+        return percent;
     }
 
     private static (DateTime From, DateTime? To) RequireValidWindow(

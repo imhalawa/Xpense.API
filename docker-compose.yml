@@ -78,5 +78,25 @@ services:
       retries: 5
       start_period: 15s
 
+  # Turns events into notifications. Reads the Events table as a queue -- there is no broker, see
+  # docs/adr/0008-the-events-table-is-the-queue.md.
+  notifications:
+    build:
+      context: .
+      dockerfile: docker/notifications/Dockerfile
+    image: xpense-notifications:local
+    container_name: xpense-notifications
+    restart: unless-stopped
+    depends_on:
+      # The same gate the API waits on: the schema exists before anything queries it.
+      migrations:
+        condition: service_completed_successfully
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: *connection
+    # No ports and no healthcheck: this serves no HTTP. Whether it is working is visible in its log
+    # and in whether the Events table drains, and adding an endpoint purely to be probed would mean
+    # carrying ASP.NET Core in a worker that has no other use for it.
+
 volumes:
   xpense-postgres-data:

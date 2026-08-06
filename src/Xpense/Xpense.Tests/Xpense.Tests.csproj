@@ -34,6 +34,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Xpense.API\Xpense.API.csproj" />
+    <!-- The notification rules and the pump are tested here rather than in a suite of their own, so
+         one `dotnet test` covers everything and the integration tests can drive a real event from
+         HTTP request to stored notification. -->
+    <ProjectReference Include="..\Xpense.Notifications\Xpense.Notifications.csproj" />
   </ItemGroup>
 
 </Project>

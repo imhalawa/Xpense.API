@@ -16,14 +16,35 @@ src/Xpense/
   Xpense.Persistence/                  DbContext, type configuration, migrations, OptionResolver
   Xpense.Tests/                        ApiEndpointTests (canonical), Unit, Architecture
 
-docker/<service>/Dockerfile            one per service: api, migrations, postgres
-docker-compose.yml                     postgres -> migrations -> api, in that order
+  Xpense.Notifications/                the worker: rules, the event processor, the pump
+
+docker/<service>/Dockerfile            one per service: api, migrations, notifications, postgres
+docker-compose.yml                     postgres -> migrations -> api + notifications, in that order
 ```
+
+`docker/*/Dockerfile` all restore the whole solution, so **adding a project means adding its `.csproj`
+to every one of them** — miss it and all three builds fail, not just the new one.
 
 Migrations never run at application startup, and reference data lives in migrations rather than in a
 startup seeder. Both are load-bearing: see [ADR 0004](docs/adr/0004-migrations-are-a-deployment-step.md)
 and [ADR 0005](docs/adr/0005-reference-data-lives-in-migrations.md) before adding code that writes to
 the database during boot.
+
+## Events and notifications
+
+Producers state facts and never decide what is worth telling anyone. `IEventBus.Emit` inserts an event
+through the caller's `DbContext`, so it commits with whatever the caller is writing — it does **not**
+save, and a caller that never saves has emitted nothing.
+
+- **The `Events` table is the queue.** No broker. [ADR 0008](docs/adr/0008-the-events-table-is-the-queue.md).
+- **Budgets never touch the write path.** [ADR 0006](docs/adr/0006-a-budget-reports-and-never-blocks.md).
+- **One notification kind per rule**, in its own file under `Xpense.Notifications/Rules/`, discovered
+  by a scan. A rule may not reference another rule, and rules duplicate each other's queries on
+  purpose — `NotificationRuleIsolationTests` enforces both.
+- **Event bodies hold primitives, enums and ids only.** No entity, no `Money`. A body is a wire format
+  read back long after it was written; `EventContractTests` enforces this.
+- **A rule's payload must contain nothing time-varying.** It is hashed to deduplicate notifications, so
+  a timestamp inside one makes every redelivery look new.
 
 ## Rules
 

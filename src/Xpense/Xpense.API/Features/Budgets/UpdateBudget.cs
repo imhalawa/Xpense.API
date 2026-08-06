@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Xpense.API.Infrastructure;
+using Xpense.Domain.Entities;
 using Xpense.Domain.Enums;
 using Xpense.Domain.Exceptions;
 using Xpense.Domain.ValueObjects;
@@ -25,7 +26,8 @@ public sealed class UpdateBudget : IEndpoint
         MoneyRequest Amount,
         string Recurrence,
         DateOnly StartsOn,
-        DateOnly? EndsOn);
+        DateOnly? EndsOn,
+        int? AlertThresholdPercent = Budget.DefaultAlertThreshold);
 
     public sealed record MoneyRequest(long MinorUnits, string Currency);
 
@@ -58,6 +60,13 @@ public sealed class UpdateBudget : IEndpoint
             RuleFor(request => request.EndsOn)
                 .Must((request, endsOn) => endsOn is null || endsOn >= request.StartsOn)
                 .WithMessage("The endsOn date cannot be before startsOn.");
+
+            // Null is allowed and means this budget says nothing before its limit is passed. The
+            // domain guards this too; this is here so a bad value is a 400 rather than a 500.
+            RuleFor(request => request.AlertThresholdPercent)
+                .InclusiveBetween(1, 100)
+                .When(request => request.AlertThresholdPercent is not null)
+                .WithMessage("The alertThresholdPercent must be between 1 and 100.");
         }
 
         private static bool IsOneOff(string recurrence) =>
@@ -86,7 +95,8 @@ public sealed class UpdateBudget : IEndpoint
             Money.OfMinorUnits(request.Amount.MinorUnits, currency),
             recurrence,
             request.StartsOn.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),
-            request.EndsOn?.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc));
+            request.EndsOn?.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),
+            request.AlertThresholdPercent);
 
         if (await db.SaveChangesAsync(ct) < 1)
             throw new BudgetUpdateFailedException(id);

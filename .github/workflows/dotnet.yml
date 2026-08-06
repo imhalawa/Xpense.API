@@ -62,6 +62,10 @@ jobs:
         # Poll rather than `--wait`: the migrations service exits by design, and polling the health
         # endpoint asserts the thing we actually care about.
         curl -fsS --retry 30 --retry-delay 2 --retry-all-errors http://localhost:4000/health
+        # The worker serves no HTTP, so `compose up` succeeding says nothing about whether it stayed
+        # up -- a crash on startup looks identical. Assert it is still running and reached its loop.
+        test "$(docker inspect -f '{{.State.Running}}' xpense-notifications)" = "true"
+        docker compose logs notifications --no-color | grep -q "Event pump started"
     - name: Compose logs
       if: ${{ !cancelled() }}
       run: docker compose logs --no-color
